@@ -31,7 +31,7 @@
     "전투 집사": { type: "butler", house: "은빛 장미 저택", rank: 0 },
     "유적 탐사가": { type: "relicHunter", rank: 0, exp: 0 },
     "흑수 말단": { type: "heishou", branch: "묘", rank: 0 },
-    "가주": { type: "hhead", family: "청운 가문" },
+    "가주": { type: "hhead", family: "가씨 가문" },
     "머리의 발톱": { type: "claw" },
   };
   const ORIGIN_LIST = [["back", "뒷골목"], ["nest", "둥지"], ["wing", "날개"], ["out", "외곽"], ["hcorp", "H사"], ["spider", "거미집"]];
