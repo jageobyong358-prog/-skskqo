@@ -285,11 +285,13 @@ const WHALES = [
     desc: "무엇이든 삼키는 붉은 고래. 가장 거대하고 가장 질기다.",
     end: "붉은 입 안쪽 깊숙이 작살을 꽂았다. 새빨간 고래가 몸을 비틀며 가라앉자 붉은 물빛도 천천히 걷혔다." },
 ];
-// 소지의 별호: 32천강과 72지살. 천퇴성(뇌횡)과 지혜성(시오미 요루)은 이미 주인이 있다.
-const TIANGANG = ["천괴성", "천강성", "천기성", "천한성", "천용성", "천웅성", "천맹성", "천위성", "천영성", "천귀성", "천부성", "천만성", "천고성", "천상성", "천우성", "천공성", "천속성", "천이성", "천구성", "천수성", "천검성", "천평성", "천죄성", "천손성", "천패성", "천뢰성", "천혜성", "천폭성", "천곡성", "천미성", "천교성", "천암성"];
-const DISHA = ["지괴성", "지살성", "지용성", "지걸성", "지웅성", "지위성", "지영성", "지기성", "지맹성", "지문성", "지정성", "지벽성", "지합성", "지강성", "지암성", "지축성", "지회성", "지좌성", "지우성", "지령성", "지수성", "지미성", "지희성", "지광성", "지비성", "지쾌성", "지명성", "지진성", "지퇴성", "지만성", "지은성", "지이성", "지리성", "지준성", "지락성", "지첩성", "지속성", "지계성", "지마성", "지요성", "지유성", "지복성", "지공성", "지손성", "지노성", "지찰성", "지악성", "지추성", "지장성", "지단성", "지각성", "지사성", "지음성", "지형성", "지평성", "지구성", "지적성", "지모성", "지폐성", "지건성", "지멸성", "지허성", "지주성", "지패성", "지묘성", "지전성", "지교성", "지혼성", "지보성", "지환성", "지월성", "지천성"];
-const isPinky = () => s.job?.type === "finger" && s.job.name === "소지";
-const STAR_TIER = { disha: "72지살", tiangang: "32천강" };
+// 소지의 별호: 36천강과 72지살. 태어날 때 정해지고 평생 잃지 않는다.
+// 소지는 별호일 뿐 조직이 아니어서, 별을 가진 이들은 대개 다른 곳에 속해 있고 서로가 누구인지 모른다.
+// 천퇴성(뇌횡)과 지혜성(시오미 요루)은 이미 주인이 있다.
+const TIANGANG = ["천괴성", "천강성", "천기성", "천한성", "천용성", "천웅성", "천맹성", "천위성", "천영성", "천귀성", "천부성", "천만성", "천고성", "천상성", "천우성", "천공성", "천속성", "천이성", "천구성", "천수성", "천검성", "천평성", "천죄성", "천손성", "천패성", "천뢰성", "천혜성", "천폭성", "천곡성", "천미성", "천교성", "천암성", "천퇴성", "천살성", "천재성", "천호성"];
+const DISHA = ["지괴성", "지살성", "지용성", "지걸성", "지웅성", "지위성", "지영성", "지기성", "지맹성", "지문성", "지정성", "지벽성", "지합성", "지강성", "지암성", "지축성", "지회성", "지좌성", "지우성", "지령성", "지수성", "지미성", "지희성", "지광성", "지비성", "지쾌성", "지명성", "지진성", "지퇴성", "지만성", "지은성", "지이성", "지리성", "지준성", "지락성", "지첩성", "지속성", "지계성", "지마성", "지요성", "지유성", "지복성", "지공성", "지손성", "지노성", "지찰성", "지악성", "지추성", "지장성", "지단성", "지각성", "지사성", "지음성", "지형성", "지평성", "지구성", "지적성", "지모성", "지폐성", "지건성", "지멸성", "지허성", "지주성", "지패성", "지묘성", "지전성", "지교성", "지혼성", "지보성", "지환성", "지월성", "지혜성"];
+const TAKEN_STARS = ["천퇴성", "지혜성"];
+const STAR_TIER = { disha: "72지살", tiangang: "36천강" };
 const relicOf = n => RELICS.find(r => r.name === n);
 const SCENES = {
   back: ["골목에 녹슨 비가 내린다.", "멀리서 해결사들의 총성이 들린다.", "옆방 사람이 또 바뀌었다.", "골목 끝 공방에서 용접 불꽃이 튄다."],
@@ -314,7 +316,6 @@ const FINGERS = [
   { name: "검지", flavor: "지령을 따른다. 이유는 묻지 않는다." },
   { name: "중지", flavor: "형제의 원한은 반드시 갚는다." },
   { name: "약지", flavor: "도시를 화폭 삼는 예술가들. 재료는 대개 사람이다." },
-  { name: "소지", flavor: "정보와 은밀함을 다룬다." },
 ];
 const SYNDS = ["갈고리 조직", "녹슨 사슬단", "검은 비늘 회", "9번가 형제단", "쥐구멍 상회", "회색 우산파"];
 const COLOR_A = ["진홍", "청록", "회백", "금빛", "칠흑", "은회", "자홍", "적갈", "남빛", "잿빛"];
@@ -324,7 +325,7 @@ const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "32천강", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -352,7 +353,7 @@ function newLife(name, gender, origin) {
     spider: zone === "spider" ? { abi: ["뤼엔", "발렌치나", "마티아스", "칼리스토", "요루"], escaped: false, teach: {} } : null,
     hFamily: zone === "hcorp" && chance(0.4) ? pick(H_FAMILIES) : null,
     // 별호는 태어날 때 정해진다. 소지에 들어가면 그 별로 불린다.
-    birthStar: (r => (r < 0.03 ? { tier: "tiangang", name: pick(TIANGANG) } : r < 0.1 ? { tier: "disha", name: pick(DISHA) } : null))(Math.random()),
+    birthStar: (r => (r < 0.03 ? { tier: "tiangang", name: pick(TIANGANG.filter(n => !TAKEN_STARS.includes(n))) } : r < 0.1 ? { tier: "disha", name: pick(DISHA.filter(n => !TAKEN_STARS.includes(n))) } : null))(Math.random()),
     hp: 100, sp: 100,
     fort: rand(base, base + 8), prud: rand(base, base + 8), temp: rand(base, base + 8), just: rand(base, base + 8),
     money: 0, rep: 0,
@@ -374,7 +375,7 @@ const maxRings = st => Math.min(5, Math.floor((st.shin || 0) / 20), Math.floor((
 const mangLoad = n => (n ? 4 * Math.pow(2, n - 1) : 0);
 const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3 + (st.ego ? (st.ego.stable ? 25 : 35) : 0)
   + (st.shin || 0) / 5 + (st.timeSense ? 5 : 0)
-  + (st.job?.star ? (st.job.star.tier === "tiangang" ? 25 : 10) : 0) + (st.vampire ? 20 + st.vampire.rank * 8 : 0) + (st.relics || []).reduce((a, n) => a + (relicOf(n)?.pow || 0), 0);
+  + (st.starKnown && st.birthStar ? (st.birthStar.tier === "tiangang" ? 25 : 10) : 0) + (st.vampire ? 20 + st.vampire.rank * 8 : 0) + (st.relics || []).reduce((a, n) => a + (relicOf(n)?.pow || 0), 0);
 const rankOf = v => (v >= 100 ? "EX" : ["I", "II", "III", "IV", "V"][Math.min(4, Math.floor(v / 20))]);
 // 성별에 따른 문구: gx(남성, 여성)
 const gx = (m, f) => (s && s.gender === "f" ? f : m);
@@ -386,7 +387,7 @@ function jobLabel(j) {
     case "fixer": return j.color ? `특색 해결사 「${j.color}」` : `${j.grade}급 해결사`;
     case "wing": return `${j.co} ${["사원", "주임", "팀장", "부장", "임원"][j.rank]}`;
     case "synd": return `${j.name} ${["말단", "행동대원", "간부", "두목"][j.rank]}`;
-    case "finger": return j.star ? `소지 ${STAR_TIER[j.star.tier]} · ${j.star.name}` : `${j.name} ${["견습", "정식 단원", "중견", "간부"][j.rank]}`;
+    case "finger": return `${j.name} ${["견습", "정식 단원", "중견", "간부"][j.rank]}`;
     case "worker": return "공장 노동자";
     case "heishou": return `흑수 - ${j.branch} ${["말단", "행동대원", "부두목", "두목"][j.rank]}`;
     case "hhead": return `${j.family} 가주`;
@@ -404,7 +405,7 @@ function jobScore(j) {
   if (!j) return 0;
   if (j.type === "fixer") return j.color ? 100 : 10 + (10 - j.grade) * 8;
   if (j.type === "wing") return 40 + j.rank * 12;
-  if (j.type === "finger") return j.star ? (j.star.tier === "tiangang" ? 95 : 70) : 35 + j.rank * 15;
+  if (j.type === "finger") return 35 + j.rank * 15;
   if (j.type === "synd") return 15 + j.rank * 10;
   if (j.type === "bloodHunter") return 30 + j.rank * 15;
   if (j.type === "butler") return 15 + j.rank * 12;
@@ -412,7 +413,6 @@ function jobScore(j) {
   return { claw: 120, hlord: 110, hhead: 70 }[j.type] ?? (j.type === "tabooHunter" ? 30 + j.rank * 15 : ["heishou", "sailor", "pirate"].includes(j.type) ? 12 + j.rank * 12 : 5);
 }
 function setJob(j) {
-  if (j?.type === "finger" && j.name === "소지" && s.birthStar && !j.star) j.star = { ...s.birthStar };
   s.job = j;
   if (j && jobScore(j) >= jobScore(s.bestJob)) s.bestJob = { ...j };
 }
@@ -648,12 +648,6 @@ const ACTIONS = [
   { id: "fixerLic", g: "진로", label: "해결사 자격 시험", desc: "협회 응시료 800안 · 용기·정의", cond: () => s.age >= 17 && !s.job, block: () => s.money < 800 && "응시료 800안 필요", run: fixerLicense },
   { id: "wingExam", g: "진로", label: "날개 입사 시험", desc: "신중 높을수록 유리 · 둥지 출신 우대", cond: () => s.age >= 19 && !s.job, run: wingExam },
   { id: "joinSynd", g: "진로", label: "조직 가입", desc: "뒷골목의 쉬운 길", cond: () => s.age >= 16 && !s.job && streetLike(s), run: joinSynd },
-  { id: "joinPinky", g: "진로", label: "소지 입문", desc: "별로 이름을 부르는 손가락", cond: () => s.age >= 18 && !s.job && (s.zone === "back" || s.zone === "hcorp"),
-    run() {
-      if (chance(clamp((power(s) - 30) / 60, 0.05, 0.8))) { setJob({ type: "finger", name: "소지", rank: 0, exp: 0 }); achieve("finger"); return s.job.star ? `소지에 받아들여졌다. 그들은 처음부터 너를 알고 있었다. 태어날 때부터 정해진 별, ${STAR_TIER[s.job.star.tier]}의 ${s.job.star.name}. 오늘부터 그 이름으로 불린다.` : "소지에 받아들여졌다. 이곳에서는 사람을 별로 부른다. 하늘의 별 32개, 땅의 별 72개. 별은 태어날 때 정해지는 것이고, 너에게는 별이 없다."; }
-      hurt(rand(20, 45), "소지의 입문 시험에서");
-      return s.alive ? "소지의 문을 두드렸지만 거절당했다. 대가로 몇 군데 뼈가 부러졌다." : "";
-    } },
   { id: "joinFinger", g: "진로", label: "손가락 입문", desc: "위험하지만 강력한 집단", cond: () => s.age >= 18 && !s.job && s.zone === "back", run: joinFinger },
   { id: "factory", g: "진로", label: "공장 취직", desc: "적은 월급, 적은 위험", cond: () => s.age >= 16 && !s.job,
     run() { setJob({ type: "worker" }); return "공장에 들어갔다. 컨베이어 벨트는 쉬지 않는다."; } },
@@ -1450,21 +1444,6 @@ const EVENTS = [
     ] }) },
   // 히든 보스: 대호수의 고래들
   ...WHALES.map(whaleEvent),
-  { id: "pinkyScout", w: () => (s.birthStar && !s.job && s.age >= 16 && s.zone !== "spider" && s.zone !== "sisyphe" ? 1.5 : 0), run: () => ({
-    title: "소지의 방문",
-    text: `하얀 옷차림의 사람이 문 앞에 서 있었다. "${STAR_TIER[s.birthStar.tier]}의 ${s.birthStar.name}. 태어날 때부터 정해진 이름이지. 이제 돌아올 때가 됐다."`,
-    choices: [
-      { label: "소지로 간다", run() { setJob({ type: "finger", name: "소지", rank: 0, exp: 0 }); achieve("finger"); return `소지의 일원이 되었다. 오늘부터 ${s.job.star.name}이라 불린다.`; } },
-      { label: "거절한다", run() { gain("temp", 2); return "문을 닫았다. 별은 사라지지 않는다. 그들은 또 올 것이다."; } },
-    ] }) },
-  { id: "starChallenger", w: () => (isPinky() && s.job.star ? 1.2 : 0), run: () => {
-    const j = s.job, high = j.star.tier === "tiangang";
-    return {
-      combat: { name: `${high ? "천강을 시험하는 지살성" : "별을 시샘하는 소지 단원"}`, desc: `별을 타고나지 못한 자들은 ${j.star.name}의 이름값을 시험하러 온다. 별은 빼앗을 수 없지만, 이름에 걸맞은지는 증명해야 한다.`, str: high ? 110 : 65, yieldAt: 15, cause: `${j.star.name}의 이름값을 시험받다` },
-      win() { s.rep += 4; return `도전자를 물리쳤다. ${j.star.name}의 이름이 골목에 한 번 더 퍼졌다.`; },
-      lose() { s.rep -= 6; strain(rand(5, 12)); return s.alive ? `졌다. 별은 그대로지만, 사람들이 ${j.star.name}의 이름을 낮게 부르기 시작했다.` : ""; },
-    };
-  } },
   { id: "busker", w: () => (s.age >= 8 && s.zone !== "sisyphe" ? 1 : 0), run: () => ({
     title: "길거리 연주자",
     text: "녹슨 바이올린을 켜는 사람이 있다. 아무도 멈춰 서지 않는다.",
@@ -1587,6 +1566,7 @@ function weighted(list) {
 function milestones() {
   const out = [];
   const m = (title, text, fn) => out.push({ run() { if (fn) fn(); return { title, text }; } });
+  if (s.birthStar && s.age === 16) m("별호", `누가 두고 갔는지 모를 쪽지가 베개 밑에 있었다. "너는 태어날 때부터 소지의 별이다. ${STAR_TIER[s.birthStar.tier]}의 ${s.birthStar.name}." 다른 별이 누구인지는 아무도 모른다. 너의 별 역시 아무도 모를 것이다. 하던 일을 그대로 하면 된다. 별은 사라지지 않는다.`, () => { s.starKnown = true; achieve(s.birthStar.tier); });
   if (s.zone === "spider") return spiderMilestones(out, m);
   if (s.age === 1) m("첫걸음", nestLike(s) ? "깨끗한 바닥 위에서 첫걸음을 뗐다." : "녹슨 철판 위에서 첫걸음을 뗐다.");
   if (s.zone === "hcorp" && s.age === 6) m("서당", "H사 구역의 서당에 들어갔다. 예법과 글씨, 그리고 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
@@ -2005,7 +1985,7 @@ function renderSheet() {
       ${s.spider && !s.spider.done ? `<dt>아비의 가르침</dt><dd class="teach">${Object.keys(ABI).filter(n => s.spider.abi.includes(n)).map(n => `${n} ${teachOf(n)}`).join(" · ")}</dd>` : ""}
       <dt>각오</dt><dd>${s.resolve || 0}</dd>
       ${s.shin ? `<dt>신(心)</dt><dd>${s.shin} · 망 최대 ${maxRings(s)}겹</dd>` : ""}
-      ${s.job?.star ? `<dt>별호</dt><dd>${STAR_TIER[s.job.star.tier]} · ${s.job.star.name}</dd>` : ""}
+      ${s.starKnown && s.birthStar ? `<dt>별호</dt><dd>${STAR_TIER[s.birthStar.tier]} · ${s.birthStar.name}</dd>` : ""}
       ${s.vampire ? `<dt>혈귀</dt><dd>${BLOOD_RANKS[s.vampire.rank]} · 갈증 ${s.vampire.thirst}</dd>` : ""}
       ${s.tigerShells ? `<dt>맹호표탄</dt><dd>${s.tigerShells}발</dd>` : ""}
       ${(s.relics || []).length ? `<dt>수집한 유물</dt><dd>${s.relics.map(esc).join(", ")}</dd>` : ""}
@@ -2022,7 +2002,7 @@ const PHRASE = {
   play: "골목에서 뛰어논다", study: "책을 펼친다", train: "몸을 단련한다", rest: "아무것도 하지 않고 쉰다",
   labor: "잡일을 구하러 나간다", social: "사람을 만나러 나간다",
   fixerLic: "협회의 해결사 시험에 응시한다", wingExam: "날개 입사 시험을 본다", joinSynd: "조직의 문을 두드린다",
-  joinFinger: "손가락을 찾아간다", joinPinky: "소지의 문을 두드린다",  factory: "공장에 이력서를 낸다",
+  joinFinger: "손가락을 찾아간다",  factory: "공장에 이력서를 낸다",
   commission: "의뢰를 하나 받는다", bigCommission: "위험한 의뢰에 손을 댄다", promotion: "협회 승급 심사를 신청한다",
   overtime: "밤늦게까지 일한다", wingPromo: "승진을 노려 본다", racket: "구역을 돌며 수금한다", fingerOp: "지령을 수행한다",
   quit: "일을 그만둔다", retire: "은퇴를 결심한다",
