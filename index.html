@@ -210,7 +210,7 @@ const store = {
 // ───────── 세계 데이터 ─────────
 const VIRTUES = [["fort", "용기"], ["prud", "신중"], ["temp", "자제"], ["just", "정의"]];
 const GENDERS = { m: "남성", f: "여성" };
-const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽", wing: "날개 구역", spider: "거미집", hcorp: "H사 구역", sisyphe: "시지프 백화점" };
+const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽", wing: "날개 구역", spider: "거미집", hcorp: "H사 구역", sisyphe: "시지프 백화점", hatch: "R사 부화장", wlost: "열차 사이" };
 // 시지프 백화점: N사의 금기를 어겨 시지프형을 받은 사람이 들어가는 곳. 층을 오르다 지면 지하 1층으로 굴러떨어진다.
 const FLOORS = ["지하 1층 푸드코트", "1층 잡화관", "2층 의류관", "3층 가전관", "4층 상영관", "옥상"];
 const FLOOR_FOES = ["푸드코트 점원", "잡화관 매니저", "의류관 마네킹들", "가전관 보안 요원", "상영관 안내원"];
@@ -309,6 +309,8 @@ const SCENES = {
   wing: ["날개의 로고가 새겨진 창 너머로 도시가 내려다보인다.", "사내 방송이 오늘의 생산 목표를 읽는다.", "보안 요원이 신분증을 다시 확인한다."],
   hcorp: ["처마 끝마다 붉은 등롱이 흔들린다.", "가문의 행렬이 지나가자 사람들이 고개를 숙인다.", "재갈을 쥔 주인 뒤로 흑수들이 말없이 따라 걷는다.", "찻집에서 보이차 향이 흘러나온다."],
   scorp: ["처마 끝에 풍경이 운다.", "장터에서 엿장수의 가위 소리가 들린다.", "갓을 쓴 사람들이 돌담길을 천천히 지나간다."],
+  hatch: ["배양조의 기포 소리가 끝없이 이어진다.", "교관이 개체 번호를 하나씩 부른다.", "옆 침상의 아이가 오늘도 같은 꿈 이야기를 한다."],
+  wlost: ["창밖으로 같은 역이 세 번째 지나간다.", "열차 칸의 끝이 보이지 않는다.", "누군가의 시계는 거꾸로, 누군가의 시계는 멈춰 있다."],
   sisyphe: ["안내 방송이 오늘의 특가를 읽는다.", "에스컬레이터가 끝없이 올라간다.", "푸드코트에서 통조림 따는 소리가 들린다."],
   spider: ["천장에서 거미줄 같은 실이 늘어진다.", "복도 끝에서 아비의 발소리가 지나간다.", "어딘가에서 아비들이 웃는 소리가 들린다."],
 };
@@ -337,7 +339,8 @@ const ACH = {
   heir: "H사 가주 후보", head: "H사 가주", lord: "H사 군주", heishou: "흑수가 되다", pildu: "흑수 필두", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", hatchery: "부화장 출신", lost: "길 잃은 자", lostReturn: "열차에서 돌아오다", rcorpTop: "R사 팀장", wcleanTop: "1등급 정리요원", blackcloudTop: "흑운회 카포", geomgyeTop: "검계의 계주",
+  spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -353,12 +356,13 @@ function rollOrigin() {
   return r < 0.1 ? "nest" : r < 0.22 ? "wing" : r < 0.93 ? "back" : r < 0.97 ? "out" : "spider";
 }
 function newLife(name, gender, origin) {
+  if (origin === "hatch") { const l = newLife(name, gender, "wing"); l.wingCo = "R사"; l.zone = "hatch"; l.hatchBorn = true; l.parents = 0; return l; }
   // "hcorp"는 H사 날개 출생을 뜻한다
   const forceH = origin === "hcorp";
   const zone = forceH ? "wing" : ZONES[origin] ? origin : rollOrigin();
   const wingCo = zone === "wing" ? (forceH || chance(0.45) ? "H사" : pick(WINGS.filter(w => w.co !== "H사")).co) : null;
   const base = (wingCo === "H사" ? 7 : { nest: 8, wing: 9, spider: 6 }[zone]) || 4;
-  return {
+  const life = {
     name: name || pick(NAMES),
     gender: gender === "m" || gender === "f" ? gender : pick(["m", "f"]),
     age: 0,
@@ -367,6 +371,7 @@ function newLife(name, gender, origin) {
     wingCo,
     spider: zone === "spider" ? { abi: ["뤼엔", "발렌치나", "마티아스", "칼리스토", "요루"], escaped: false, teach: {} } : null,
     hFamily: wingCo === "H사" && chance(0.4) ? pick(H_FAMILIES) : null,
+    hatchBorn: wingCo === "R사" && chance(0.4),
     // 별호는 태어날 때 정해진다. 소지에 들어가면 그 별로 불린다.
     birthStar: (r => (r < 0.03 ? { tier: "tiangang", name: pick(TIANGANG.filter(n => !TAKEN_STARS.includes(n))) } : r < 0.1 ? { tier: "disha", name: pick(DISHA.filter(n => !TAKEN_STARS.includes(n))) } : null))(Math.random()),
     hp: 100, sp: 100,
@@ -379,6 +384,8 @@ function newLife(name, gender, origin) {
     log: [], ach: [],
     alive: true, cause: null,
   };
+  if (life.hatchBorn) { life.zone = "hatch"; life.parents = 0; }
+  return life;
 }
 
 const apFor = st => (st.age < 6 ? 1 : st.age < 16 ? 2 : 3);
@@ -394,7 +401,7 @@ const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3 + (st.eg
 const rankOf = v => (v >= 100 ? "EX" : ["I", "II", "III", "IV", "V"][Math.min(4, Math.floor(v / 20))]);
 // 성별에 따른 문구: gx(남성, 여성)
 const gx = (m, f) => (s && s.gender === "f" ? f : m);
-const where = st => (st.zone === "sisyphe" ? `시지프 백화점 ${FLOORS[st.floor || 0]}` : st.zone === "spider" ? "거미집" : st.zone === "hcorp" ? `${st.district}구 H사 구역` : st.zone === "wing" ? `${st.district}구 ${st.wingCo} 날개 구역` : `${st.district}구 ${ZONES[st.zone]}`);
+const where = st => (st.zone === "hatch" ? "R사 부화장" : st.zone === "wlost" ? "W사 열차 사이의 어딘가" : st.zone === "sisyphe" ? `시지프 백화점 ${FLOORS[st.floor || 0]}` : st.zone === "spider" ? "거미집" : st.zone === "hcorp" ? `${st.district}구 H사 구역` : st.zone === "wing" ? `${st.district}구 ${st.wingCo} 날개 구역` : `${st.district}구 ${ZONES[st.zone]}`);
 
 function jobLabel(j) {
   if (!j) return "없음";
@@ -411,6 +418,7 @@ function jobLabel(j) {
     case "pirate": return j.rank === 3 ? `해적선 「${j.ship}」의 선장` : `해적 ${["졸개", "갑판장", "부선장"][j.rank]}`;
     case "tabooHunter": return `${["수습", "정식", "베테랑", "전설의"][j.rank]} 금기사냥꾼`;
     case "claw": return "머리의 발톱";
+    default: if (ORGS[j.type]) return ORGS[j.type].title(j) + ORGS[j.type].ranks[j.rank]; break;
     case "bloodHunter": return `${["견습", "정식", "베테랑", "전설의"][j.rank]} 혈귀 사냥꾼`;
     case "butler": return `${j.house}의 ${["견습 ", "", "수석 ", ""][j.rank]}${j.rank === 3 ? gx("집사장", "메이드장") : gx("전투 집사", "전투 메이드")}`;
     case "relicHunter": return `${["신참", "정식", "베테랑", "전설의"][j.rank]} 유적 탐사가`;
@@ -425,6 +433,7 @@ function jobScore(j) {
   if (j.type === "bloodHunter") return 30 + j.rank * 15;
   if (j.type === "butler") return 15 + j.rank * 12;
   if (j.type === "relicHunter") return 20 + j.rank * 14;
+  if (ORGS[j.type]) return 20 + j.rank * 15;
   return { claw: 120, hlord: 110, hhead: 70 }[j.type] ?? (j.type === "tabooHunter" ? 30 + j.rank * 15 : ["heishou", "sailor", "pirate"].includes(j.type) ? 12 + j.rank * 12 : 5);
 }
 function setJob(j) {
@@ -616,7 +625,72 @@ function drawCombat() {
 }
 
 // ───────── 행동 ─────────
+// 공통 틀을 쓰는 조직들. 들어가는 선택지와 일하는 선택지가 여기서 만들어진다.
+const R_TEAMS = ["토끼팀", "순록팀", "코뿔소팀", "코끼리팀"];
+const ORGS = {
+  rcorp: {
+    title: j => `R사 ${j.team} `, ranks: ["대원", "분대장", "팀장"],
+    join: { label: "R사 용병단", desc: "날개 R사의 용병 · 팀에 배정된다", cond: () => s.age >= 18, phrase: "R사 용병단에 지원한다",
+      text: j => `R사 용병단에 들어가 ${j.team}에 배정되었다. 같은 얼굴을 한 대원이 몇 명 보였다.`, extra: () => ({ team: pick(R_TEAMS) }) },
+    work: { label: "작전 투입", desc: "R사의 작전 · 전투", phrase: "작전에 투입된다" },
+    foes: ["적 용병단", "의뢰 대상 조직", "도시 밖에서 넘어온 괴물"], str: r => 55 + r * 15, pay: r => rand(3000, 6000) * (r + 1),
+    income: r => 4000 + r * 4000, top: "rcorpTop",
+    winText: (foe, j) => `${foe}을(를) 제압했다. 팀 무전으로 짧은 칭찬이 들렸다.`,
+  },
+  wclean: {
+    title: () => "W사 정리요원 ", ranks: ["3등급", "2등급", "1등급"],
+    join: { label: "W사 정리요원", desc: "워프 열차 안을 정리하는 W사 요원", cond: () => s.age >= 18, phrase: "W사 정리요원에 지원한다",
+      text: () => "W사 정리요원이 되었다. 승무원 제복 아래에 칼을 차는 법부터 배웠다. 열차 안에서 일어난 일은 열차 안에서 끝낸다." },
+    work: { label: "열차 정리", desc: "사고가 난 칸을 정리한다 · 전투", phrase: "사고가 난 열차 칸에 들어간다" },
+    foes: ["열차 안에서 뒤틀린 승객", "워프 사고의 잔해", "열차 사이에서 길 잃은 자"], str: r => 50 + r * 15, pay: r => rand(2500, 5000) * (r + 1),
+    income: r => 5000 + r * 3000, top: "wcleanTop",
+    winText: foe => `${foe}을(를) 정리했다. 다음 역에 닿기 전에 칸은 깨끗해졌다. 승객들은 아무것도 기억하지 못할 것이다.`,
+  },
+  blackcloud: {
+    title: () => "엄지 흑운회 ", ranks: ["졸개", "솔다토", "카포"],
+    join: { label: "흑운회", desc: "엄지 산하 조직 · 위계가 엄격하다", cond: () => s.age >= 16 && streetLike(s), phrase: "흑운회에 충성을 맹세한다",
+      text: () => "엄지 산하 흑운회에 들어갔다. 윗사람이 말할 때는 고개를 들지 않는다. 그것이 첫 번째 규칙이다." },
+    work: { label: "흑운회의 일", desc: "엄지의 이름으로 구역을 지킨다 · 전투", phrase: "흑운회의 일을 맡는다" },
+    foes: ["다른 패밀리의 조직원들", "상납금을 떼먹은 자들", "엄지의 눈을 피하는 조직"], str: r => 40 + r * 15, pay: r => rand(1500, 4000) * (r + 1),
+    income: r => 1500 + r * 3000, top: "blackcloudTop",
+    winText: foe => `${foe}을(를) 처리했다. 윗선에 보고할 때는 고개를 숙인 채였다.`,
+  },
+  geomgye: {
+    title: () => "검계 ", ranks: ["계원", "검수", "계주"],
+    join: { label: "검계", desc: "S사 뒷골목의 비밀 검객 조직", cond: () => s.age >= 16 && isS(s), phrase: "검계의 계원이 된다",
+      text: () => "검계에 들었다. 맹세는 밤에, 칼로 했다. 낮에는 평범한 백성처럼 살고, 밤에는 갓 대신 두건을 쓴다." },
+    work: { label: "검계의 밤일", desc: "밤에 칼을 든다 · 전투", phrase: "두건을 쓰고 밤길에 나선다" },
+    foes: ["포도청의 사병들", "다른 계의 검객들", "양반가의 사병"], str: r => 45 + r * 15, pay: r => rand(1500, 3500) * (r + 1),
+    income: r => 1200 + r * 2500, top: "geomgyeTop",
+    winText: foe => `${foe}을(를) 베고 새벽닭이 울기 전에 돌아왔다.`,
+  },
+};
+function orgActions() {
+  const out = [];
+  for (const [type, o] of Object.entries(ORGS)) {
+    out.push({ id: type + "Join", g: "진로", label: o.join.label, desc: o.join.desc, cond: () => !s.job && o.join.cond(),
+      run() { setJob({ type, rank: 0, ...(o.join.extra ? o.join.extra() : {}) }); return o.join.text(s.job); } });
+    out.push({ id: type + "Work", g: "일", label: o.work.label, desc: o.work.desc, cond: () => s.job?.type === type, run: () => orgWork(type) });
+  }
+  return out;
+}
+function orgWork(type) {
+  const o = ORGS[type], j = s.job;
+  const foe = pick(o.foes), m = o.pay(j.rank);
+  return {
+    combat: { name: foe, desc: `${jobLabel(j)}로서의 일이다.`, str: o.str(j.rank), yieldAt: 12, cause: `${foe}에게` },
+    win() {
+      s.money += m; s.rep += 2;
+      let text = `${o.winText(foe, j)} ${fmt(m)}안.`;
+      if (j.rank < o.ranks.length - 1 && chance(0.3)) { j.rank++; setJob(j); text += ` 지금은 ${jobLabel(j)}.`; if (j.rank === o.ranks.length - 1) achieve(o.top); }
+      return text;
+    },
+    lose() { s.rep -= 2; return `${foe}에게 밀렸다. 윗선의 눈초리가 차가워졌다.`; },
+  };
+}
+
 const ACTIONS = [
+  ...orgActions(),
   // 기본
   { id: "sleep", g: "기본", label: "잠", desc: "체력·정신 회복", cond: () => s.age < 3,
     run() { heal(10, 15); return pick(["하루 종일 잤다. 꿈속에서도 무언가를 쥐려는 듯 손가락을 오므렸다.", "누군가의 품에서 잠들었다.", "울다 지쳐 잠들었다."]); } },
@@ -739,6 +813,7 @@ const ACTIONS = [
   { id: "climb", g: "진로", label: "위층으로", desc: "층 지기와 전투 · 지면 지하 1층으로", cond: () => s.zone === "sisyphe" && (s.floor || 0) < 5, run: climb },
   { id: "cinema", g: "생활", label: "상영관", desc: "지난 삶을 본다 · 정신 회복", cond: () => s.zone === "sisyphe" && s.floor >= 4, run: cinema },
   { id: "leaveSisyphe", g: "진로", label: "형기를 마친다", desc: "옥상에서 도시로 돌아간다", cond: () => s.zone === "sisyphe" && s.floor === 5, run: leaveSisyphe },
+  { id: "lostExit", g: "진로", label: "출구 찾기", desc: "열차 사이를 헤맨다 · 전투 · 돌아갈 수도 있다", cond: () => s.zone === "wlost", run: lostExit },
   { id: "egoCalm", g: "생활", label: "E.G.O 다스리기", desc: "불안정한 E.G.O를 안정시킨다 · 정신 소모", cond: () => s.ego && !s.ego.stable,
     run() {
       if (chance(0.15 + (s.temp + s.prud) / 400)) { s.ego.stable = true; achieve("ego"); heal(0, 100); return `「${s.ego.name}」의 균열이 메워졌다. 이제 이 E.G.O는 온전히 나의 것이다.`; }
@@ -1591,7 +1666,7 @@ const EVENTS = [
     title: "W사 열차",
     text: "다른 구로 가는 W사 워프 열차 표가 생겼다. 몇 초면 도착한다고 한다. 그 몇 초가 승객에게는 훨씬 길게 느껴질 때가 있다는 소문도 있다.",
     choices: [
-      { label: "탄다 (2,000안)", run() { s.money -= 2000; if (chance(0.85)) { heal(0, 15); const m = rand(1000, 5000); s.money += m; return `다른 구에서 일거리를 찾아 ${fmt(m)}안을 벌어 왔다.`; } strain(rand(30, 50), "워프 열차 안에서"); return s.alive ? "열차 안에서 몇 초가 지났다. 아니, 몇 년이었을지도 모른다. 내릴 때 머리가 하얗게 셌다." : ""; } },
+      { label: "탄다 (2,000안)", run() { s.money -= 2000; if (chance(0.85)) { heal(0, 15); const m = rand(1000, 5000); s.money += m; return `다른 구에서 일거리를 찾아 ${fmt(m)}안을 벌어 왔다.`; } strain(rand(30, 50), "워프 열차 안에서"); if (!s.alive) return ""; if (chance(0.4)) return getLost(); return "열차 안에서 몇 초가 지났다. 아니, 몇 년이었을지도 모른다. 내릴 때 머리가 하얗게 셌다."; } },
       { label: "타지 않는다", run: () => "표를 되팔았다." },
     ] }) },
   { id: "nestCheck", w: () => (nestLike(s) && s.age >= 18 ? 1 : 0), run() { const m = rand(500, 2500); s.money -= m; return { title: "둥지 검문", text: `둥지 관리국의 정기 감사. 이것저것 명목으로 ${fmt(m)}안이 빠져나갔다.` }; } },
@@ -1613,6 +1688,7 @@ function milestones() {
   const out = [];
   const m = (title, text, fn) => out.push({ run() { if (fn) fn(); return { title, text }; } });
   if (s.birthStar && s.age === 16) m("별호", `어느 밤, 잠에서 깨어나 보니 가슴속에 이름 하나가 새겨져 있었다. ${STAR_TIER[s.birthStar.tier]}의 ${s.birthStar.name}. 누가 알려 준 것도 아닌데 처음부터 알고 있던 것 같았다. 이 별을 가진 사람이 또 있는지, 누가 별을 가졌는지는 아무도 모른다. 이 일은 누구에게도 말하지 않기로 했다.`, () => { s.starKnown = true; achieve(s.birthStar.tier); });
+  if (s.zone === "hatch") return hatchMilestones(out, m);
   if (s.zone === "spider") return spiderMilestones(out, m);
   if (s.age === 1) m("첫걸음", nestLike(s) ? "깨끗한 바닥 위에서 첫걸음을 뗐다." : "녹슨 철판 위에서 첫걸음을 뗐다.");
   if (isS(s) && s.age === 6) m("서당", "S사 구역의 서당에 들어갔다. 훈장님 앞에서 천자문을 외우고, 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
@@ -1630,6 +1706,45 @@ function milestones() {
   }
   if (s.age === 40) m("마흔", `거울 속에 ${gx("아버지", "어머니")}의 얼굴이 보이기 시작했다.`);
   return out;
+}
+
+// ───────── R사 부화장 ─────────
+function hatchMilestones(out, m) {
+  if (s.age === 1) m("부화장", "배양조 밖으로 처음 나왔다. 교관들은 아이들을 이름 대신 번호로 불렀다.", () => achieve("hatchery"));
+  if (s.age === 6) m("훈련 과정", "총을 쥐는 법을 배웠다. 같은 얼굴을 한 아이들 가운데 누가 더 빠른지 매일 기록되었다.", () => { gain("fort", 4); gain("just", 3); });
+  if (s.age === 10) m("선별", "선별 시험이 있었다. 통과하지 못한 아이들의 침상은 다음 날 비어 있었다.", () => strain(rand(10, 20), "선별 시험 뒤의 빈 침상들 앞에서"));
+  if (s.age === 12) {
+    const team = pick(R_TEAMS);
+    m("배정", `${team}에 배정되었다. 부화장을 떠나 R사의 막사로 옮겼다. 처음으로 하늘을 보았다.`, () => {
+      s.zone = "wing"; s.wingCo = "R사"; s.district = rand(1, 25);
+      setJob({ type: "rcorp", team, rank: 0 });
+    });
+  }
+  return out;
+}
+const HATCH_OK = ["sleep", "babble", "crawl", "toy", "study", "train", "rest", "meditate", "diary"];
+
+// ───────── W사 열차 사이에서 길을 잃다 ─────────
+const LOST_OK = ["rest", "meditate", "diary", "train", "lostExit"];
+function getLost() {
+  s.zone = "wlost"; s.prevJob = s.job; setJob(null);
+  achieve("lost");
+  return "열차 안에서 몇 초가 지났다. 아니, 몇 년이었을지도 모른다. 문이 열렸을 때 내린 곳은 역이 아니었다. 끝없이 이어지는 칸, 거꾸로 흐르는 시계. 길을 잃었다.";
+}
+function lostExit() {
+  const foe = pick(["뒤틀린 승객", "같은 칸을 맴도는 길 잃은 자들", "W사 정리요원"]);
+  return {
+    combat: { name: foe, desc: "출구로 이어질지도 모르는 칸의 문 앞을 무언가가 막고 있다.", str: 60, yieldAt: 15, cause: `열차 사이에서 ${foe}에게` },
+    win() {
+      if (chance(0.5)) {
+        const lostYears = rand(1, 6);
+        s.age += lostYears; s.zone = "back"; s.district = rand(1, 25); achieve("lostReturn");
+        return `문 너머로 녹슨 공기가 밀려왔다. ${s.district}구 뒷골목이었다. 열차 안에서는 며칠이었는데, 바깥에서는 ${lostYears}년이 지나 있었다.`;
+      }
+      return "문을 열었지만 또 다른 칸이었다. 그래도 조금은 출구에 가까워진 것 같다.";
+    },
+    lose() { return "밀려나 다시 처음 칸으로 돌아왔다. 아니, 처음 칸이었던가."; },
+  };
 }
 
 // ───────── 거미집 ─────────
@@ -1874,10 +1989,11 @@ function passive() {
   else if (j?.type === "hlord") income = 50000;
   else if (j?.type === "sailor") income = 1200 + j.rank * 2000;
   else if (j?.type === "claw") income = 30000;
+  else if (ORGS[j?.type]) income = ORGS[j.type].income(j.rank);
   else if (j?.type === "butler") income = 4000 + j.rank * 3000;
   if (income) { s.money += income; say(`${jobLabel(j)} 수입 ${fmt(income)}안.`, "act"); }
   if (s.age >= 18) {
-    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, scorp: 1200, sisyphe: 200 })[zkey(s)] + s.kids * (nestLike(s) ? 1500 : 300);
+    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, scorp: 1200, hatch: 0, wlost: 0, sisyphe: 200 })[zkey(s)] + s.kids * (nestLike(s) ? 1500 : 300);
     s.money -= cost;
   }
   if (s.money < -3000) {
@@ -1901,6 +2017,7 @@ function passive() {
   if (s.age >= 60 && !s.vampire) { gain("fort", -1); hurt(rand(1, 3) + Math.floor((s.age - 60) / 8), "노쇠하여"); }
   if (s.ego && !s.ego.stable && s.alive) strain(rand(4, 10), "불안정한 E.G.O에 잠식되어");
   if (s.job?.type === "claw" && s.alive) strain(rand(3, 8), "발톱의 의무에");
+  if (s.zone === "wlost" && s.alive) strain(rand(4, 9), "엉킨 시간 속에서");
   if (s.taboo && s.alive && chance(0.2)) {
     if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
     else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다", true);
@@ -1926,7 +2043,7 @@ function advanceYear() {
     const n = s.age < 12 ? 1 : chance(0.55) ? 2 : 1;
     const used = new Set();
     for (let i = 0; i < n; i++) {
-      const ev = weighted(EVENTS.filter(e => !used.has(e.id) && (s.zone !== "spider" || SPIDER_EVENTS.includes(e.id)) && (s.zone !== "sisyphe" ? !["broadcast", "peddler"].includes(e.id) : SISYPHE_EVENTS.includes(e.id))));
+      const ev = weighted(EVENTS.filter(e => !used.has(e.id) && (s.zone !== "spider" || SPIDER_EVENTS.includes(e.id)) && (s.zone !== "sisyphe" ? !["broadcast", "peddler"].includes(e.id) : SISYPHE_EVENTS.includes(e.id)) && (s.zone !== "hatch" || SPIDER_EVENTS.includes(e.id)) && (s.zone !== "wlost" || ["self", "egoRampage"].includes(e.id))));
       if (ev) { used.add(ev.id); queue.push(ev); }
     }
   }
@@ -2045,6 +2162,8 @@ function renderSheet() {
 }
 
 const PHRASE = {
+  lostExit: "다음 칸의 문을 연다",
+  ...Object.fromEntries(Object.entries(ORGS).flatMap(([t, o]) => [[t + "Join", o.join.phrase], [t + "Work", o.work.phrase]])),
   sleep: "잠을 잔다", babble: "옹알이를 한다", crawl: "바닥을 기어 다닌다", toy: "장난감을 가지고 논다",
   walk: "거리를 걷는다", diary: "일기를 쓴다", meditate: "조용히 명상한다", cook: "밥을 지어 먹는다", news: "신문을 펼친다",
   pub: "술집에 들른다", gamble: "도박장에 간다", volunteer: "무료 급식소를 돕는다", workshop: "공방을 구경한다",
@@ -2072,7 +2191,7 @@ const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린�
 const phrase0 = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
 const phrase = a => (a.id === "play" && PLAY_PLACE[zkey(s)]) || phrase0(a);
 const SISYPHE_OK = ["study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe", "feed"];
-const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id)) && (s.zone !== "sisyphe" || SISYPHE_OK.includes(a.id));
+const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id)) && (s.zone !== "sisyphe" || SISYPHE_OK.includes(a.id)) && (s.zone !== "hatch" || HATCH_OK.includes(a.id)) && (s.zone !== "wlost" || LOST_OK.includes(a.id));
 
 // 한 번에 최대 네 개의 선택지: 진로·일·생활에서 하나씩 우선, 나머지는 무작위
 function makeOffer() {
@@ -2095,7 +2214,7 @@ function renderTurn() {
   const total = apFor(s);
   const season = (total === 1 ? ["한 해"] : total === 2 ? ["상반기", "하반기"] : ["봄", "여름", "가을"])[total - s.ap] || "한 해";
   const opts = s.offer.map(id => ACTIONS.find(a => a.id === id)).filter(a => a && usable(a));
-  const tools = ACTIONS.filter(a => a.ap === 0 && a.cond() && s.zone !== "spider" && s.zone !== "sisyphe");
+  const tools = ACTIONS.filter(a => a.ap === 0 && a.cond() && !["spider", "sisyphe", "hatch", "wlost"].includes(s.zone));
   // 큰 목표는 조건이 덜 차도 무엇이 모자란지 보이도록 비활성으로 띄운다
   const goals = ACTIONS.filter(a => GOAL_IDS.includes(a.id) && a.cond() && a.block && a.block());
   return `
@@ -2193,6 +2312,7 @@ function renderIntro() {
       wing: `${s.wingCo} 직원 가정의 ${kid}로 태어났다. ${WINGS.find(w => w.co === s.wingCo)?.flavor ?? ""} 출입증이 있는 아기다.`,
       back: `${where(s)}에서 ${kid}로 태어났다. 뒷골목의 낡은 방 한 칸. 흔한 시작이다.`,
       out: `${where(s)}에서 ${kid}로 태어났다. 도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다.`,
+      hatch: `R사 부화장의 배양조에서 깨어났다. 이름보다 먼저 개체 번호 R-${rand(1000, 9999)}이 붙었다. 부모는 없다. 같은 얼굴을 한 아이들이 줄지어 누워 있었다.`,
       spider: `다섯 손가락이 자신들의 치부를 버리는 곳, 거미집에서 ${kid}로 태어났다. 어머니 시오미 요루는 갓난아기에게 처음이자 마지막 한마디를 건넸다. "날 닮지 마라."`,
     }[zkey(s)];
     say(birth, "event", "탄생");
