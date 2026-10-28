@@ -232,6 +232,20 @@ const TABOO_FOES = ["시간을 되감으려는 연구자", "인공지능에 몸�
 const CLAW_TARGETS = ["금기를 어긴 날개의 임원", "특이점을 빼돌린 연구 집단", "금기 연구를 숨긴 특색 해결사"];
 const COMMISSION_FOES = ["뒷골목 조직원들", "용병 무리", "도망친 개조인간", "폭주한 의체 사용자", "경쟁 사무소의 해결사"];
 const DOG_NAMES = ["보리", "콩이", "까망이", "뭉치"];
+const BLOOD_RANKS = ["갓 태어난 혈귀", "혈귀", "오래된 혈귀", "혈귀 귀족"];
+const BLOOD_HOUSES = ["적월 가문", "흑장미 가문", "은잔 가문", "잿빛 성채 가문"];
+const BLOOD_FOES = ["굶주린 혈귀", "혈귀 무리", "혈귀 가문의 버틀러들", "오래된 혈귀"];
+const RUIN_FOES = ["유적의 수호 기계", "무너진 회랑의 괴물", "경쟁 도굴꾼들", "잠에서 깬 무언가"];
+// 유물: 위력을 주지만 해마다 대가를 받아 간다
+const RELICS = [
+  { name: "울부짖는 창", pow: 15, curse: "sp", desc: "휘두를 때마다 누군가의 비명이 들린다." },
+  { name: "피를 먹는 검", pow: 18, curse: "hp", desc: "주인의 피도 가리지 않는다." },
+  { name: "시간의 모래시계", pow: 6, stat: "prud", curse: "sp", desc: "모래가 거꾸로 흐를 때가 있다." },
+  { name: "침묵의 가면", pow: 8, stat: "temp", curse: "sp", desc: "쓰고 있으면 자기 목소리가 들리지 않는다." },
+  { name: "녹슨 왕관", pow: 5, rep: 20, curse: "hp", desc: "이마를 조금씩 파고든다." },
+  { name: "꺼지지 않는 심장", pow: 12, curse: "sp", desc: "주머니 속에서 아직도 뛰고 있다." },
+];
+const relicOf = n => RELICS.find(r => r.name === n);
 const SCENES = {
   back: ["골목에 녹슨 비가 내린다.", "멀리서 해결사들의 총성이 들린다.", "옆방 사람이 또 바뀌었다.", "골목 끝 공방에서 용접 불꽃이 튄다."],
   out: ["외곽의 바람이 모래를 실어 온다.", "폐허 너머에서 정체 모를 울음소리가 들린다.", "오늘도 물을 구하는 게 일이다."],
@@ -264,6 +278,7 @@ const EGO_NAMES = ["꺼지지 않는 등불", "가시 돋친 서약", "잿빛 �
 const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
+  vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "집사장", relic: "유물 발견", relic5: "유물 수집가",
   spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
@@ -308,7 +323,8 @@ const apFor = st => (st.age < 6 ? 1 : st.age < 16 ? 2 : 3);
 const maxRings = st => Math.min(5, Math.floor((st.shin || 0) / 20));
 const mangLoad = n => (n ? 4 * Math.pow(2, n - 1) : 0);
 const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3 + (st.ego ? (st.ego.stable ? 25 : 35) : 0)
-  + (st.shin || 0) / 5 + (st.timeSense ? 5 : 0);
+  + (st.shin || 0) / 5 + (st.timeSense ? 5 : 0)
+  + (st.vampire ? 20 + st.vampire.rank * 8 : 0) + (st.relics || []).reduce((a, n) => a + (relicOf(n)?.pow || 0), 0);
 const rankOf = v => (v >= 100 ? "EX" : ["I", "II", "III", "IV", "V"][Math.min(4, Math.floor(v / 20))]);
 // 성별에 따른 문구: gx(남성, 여성)
 const gx = (m, f) => (s && s.gender === "f" ? f : m);
@@ -329,6 +345,9 @@ function jobLabel(j) {
     case "pirate": return j.rank === 3 ? `해적선 「${j.ship}」의 선장` : `해적 ${["졸개", "갑판장", "부선장"][j.rank]}`;
     case "tabooHunter": return `${["수습", "정식", "베테랑", "전설의"][j.rank]} 금기사냥꾼`;
     case "claw": return "머리의 발톱";
+    case "bloodHunter": return `${["견습", "정식", "베테랑", "전설의"][j.rank]} 혈귀 사냥꾼`;
+    case "butler": return `${j.house}의 ${["견습 버틀러", "버틀러", "수석 버틀러", "집사장"][j.rank]}`;
+    case "relicHunter": return `${["신참", "정식", "베테랑", "전설의"][j.rank]} 유적 탐사가`;
   }
 }
 function jobScore(j) {
@@ -337,6 +356,9 @@ function jobScore(j) {
   if (j.type === "wing") return 40 + j.rank * 12;
   if (j.type === "finger") return 35 + j.rank * 15;
   if (j.type === "synd") return 15 + j.rank * 10;
+  if (j.type === "bloodHunter") return 30 + j.rank * 15;
+  if (j.type === "butler") return 15 + j.rank * 12;
+  if (j.type === "relicHunter") return 20 + j.rank * 14;
   return { claw: 120, hlord: 110, hhead: 70 }[j.type] ?? (j.type === "tabooHunter" ? 30 + j.rank * 15 : ["heishou", "sailor", "pirate"].includes(j.type) ? 12 + j.rank * 12 : 5);
 }
 function setJob(j) {
@@ -572,6 +594,17 @@ const ACTIONS = [
   { id: "plunder", g: "일", label: "약탈", desc: "상선 습격 · 전투 · 명성 ↓", cond: () => s.job?.type === "pirate", run: plunder },
   { id: "hunt", g: "일", label: "금기 위반자 추적", desc: "현상금 · 전투", cond: () => s.job?.type === "tabooHunter", run: hunt },
   { id: "execute", g: "일", label: "처형 집행", desc: "머리의 명령 · 강적과의 전투", cond: () => s.job?.type === "claw", run: execute },
+  { id: "bloodHunterJoin", g: "진로", label: "혈귀 사냥꾼", desc: "혈귀를 사냥하는 자들의 길드", cond: () => s.age >= 18 && !s.job && !s.vampire, block: () => power(s) < 35 && "전투력 35 이상 필요",
+    run() { setJob({ type: "bloodHunter", rank: 0, exp: 0 }); return "혈귀 사냥꾼 길드에 이름을 올렸다. 첫날 받은 것은 말뚝과 은 탄환, 그리고 동료들의 묘비 목록이었다."; } },
+  { id: "butlerJoin", g: "진로", label: "버틀러", desc: "혈귀 가문을 모신다 · 안정된 수입", cond: () => s.age >= 16 && !s.job && !s.vampire,
+    run() { const house = pick(BLOOD_HOUSES); setJob({ type: "butler", house, rank: 0 }); return `${house}의 견습 버틀러가 되었다. 주인은 낮에는 잠들고, 밤에는 목이 마르다.`; } },
+  { id: "relicJoin", g: "진로", label: "유적 탐사가", desc: "유적에서 유물을 캐낸다", cond: () => s.age >= 18 && !s.job,
+    run() { setJob({ type: "relicHunter", rank: 0, exp: 0 }); return "유적 탐사대에 합류했다. 대장이 말했다. 유물은 힘을 주지만, 반드시 무언가를 가져간다고."; } },
+  { id: "bloodHunt", g: "일", label: "혈귀 사냥", desc: "현상금 · 전투", cond: () => s.job?.type === "bloodHunter", run: bloodHunt },
+  { id: "serve", g: "일", label: "주인을 모신다", desc: "돈 · 자제 ↑ · 피를 바칠 때가 있다", cond: () => s.job?.type === "butler", run: serve },
+  { id: "ruin", g: "일", label: "유적 탐사", desc: "전투 · 유물을 찾을 수도 있다", cond: () => s.job?.type === "relicHunter", run: ruin },
+  { id: "feed", g: "생활", label: "피를 마신다", desc: "굶주림을 달랜다 · 체력 회복", cond: () => !!s.vampire, run: feed },
+  { id: "sellRelic", g: "생활", label: "유물 경매", desc: "유물을 팔아 돈을 번다", cond: () => (s.relics || []).length > 0 && s.zone !== "spider", run: sellRelic },
   { id: "quit", g: "일", label: "일을 그만둔다", desc: "백수로 돌아간다", cond: () => !!s.job, run: quitJob },
   { id: "retire", g: "일", label: "은퇴", desc: "모은 돈으로 여생을", cond: () => !!s.job && s.age >= 50,
     run() { const old = jobLabel(s.job); setJob(null); s.retired = true; heal(10, 20); return `${old} 생활을 접었다. 손이 아직 기억하고 있다.`; } },
@@ -880,6 +913,100 @@ function execute() {
   };
 }
 
+// ───────── 혈귀 · 혈귀 사냥꾼 · 버틀러 · 유물 ─────────
+function becomeVampire(how) {
+  s.vampire = { rank: 0, thirst: 0, feeds: 0 };
+  if (s.job?.type === "butler" || s.job?.type === "bloodHunter") setJob(null);
+  s.hp = 100; gain("fort", 8); gain("just", 8);
+  achieve("vampire");
+  return `${how} 심장이 한 번 멈췄다가 다시 뛰었다. 이제 늙지 않는다. 대신 해마다 피를 마셔야 한다.`;
+}
+function feed() {
+  return {
+    title: "갈증",
+    text: "목구멍 안쪽이 타들어 간다. 피를 마시지 않은 지 오래되면 몸이 먼저 무너진다.",
+    choices: [
+      { label: "뒷골목의 행인을 노린다", sub: "명성 ↓", run() { drink(); s.rep -= 5; return "골목 끝에서 비틀거리는 사람을 붙잡았다. 다 마시고 나서야 얼굴을 보았다."; } },
+      { label: "버틀러가 바친 피를 마신다 (3,000안)", sub: "명성 그대로", cond: () => s.money >= 3000, run() { s.money -= 3000; drink(); return "은잔에 담긴 피를 받았다. 누구의 것인지는 묻지 않았다."; } },
+      { label: "참는다", run() { strain(rand(5, 12), "피의 갈증에"); return s.alive ? "손톱으로 손바닥을 파며 밤을 넘겼다." : ""; } },
+    ],
+  };
+}
+function drink() {
+  const v = s.vampire;
+  v.thirst = 0; v.feeds++;
+  s.hp = 100; heal(0, 10);
+  const next = [3, 8, 15][v.rank];
+  if (next && v.feeds >= next) {
+    v.rank++;
+    if (v.rank === 3) achieve("bloodNoble");
+    say(`피가 몸에 스며들었다. 이제 ${BLOOD_RANKS[v.rank]}이다.`, "good");
+  }
+}
+function bloodHunt() {
+  const j = s.job;
+  const foe = pick(BLOOD_FOES);
+  const bounty = 3500 * (j.rank + 1);
+  return {
+    combat: { name: foe, desc: "피 냄새가 짙은 저택. 창문은 모두 검은 천으로 가려져 있다.", str: 50 + j.rank * 14, yieldAt: 12, cause: `${foe}에게 피를 빨려` },
+    win() {
+      s.money += bounty; j.exp++; s.rep += 3;
+      if (j.rank < 3 && j.exp >= (j.rank + 1) * 3) { j.rank++; j.exp = 0; setJob(j); if (j.rank === 3) achieve("bloodLegend"); }
+      return `${foe}의 심장에 말뚝을 박았다. 현상금 ${fmt(bounty)}안. 지금은 ${jobLabel(j)}.`;
+    },
+    lose() { strain(rand(5, 12)); return s.alive ? "목덜미에 이빨 자국을 남긴 채 겨우 도망쳤다." : ""; },
+  };
+}
+function serve() {
+  const j = s.job;
+  const m = rand(1500, 3000) * (j.rank + 1);
+  s.money += m; gain("temp", 2);
+  let text = `${j.house}의 연회를 준비했다. 손님들의 잔에는 와인이 아닌 것이 담겼다. 수고비 ${fmt(m)}안.`;
+  if (chance(0.25)) { bruise(rand(10, 25)); strain(rand(5, 10), "주인에게 피를 바치고"); text += " 그날 밤 주인이 목이 마르다며 손목을 내밀라고 했다."; }
+  if (j.rank < 3 && chance(0.3)) { j.rank++; setJob(j); if (j.rank === 3) achieve("butlerChief"); text += ` 지금은 ${jobLabel(j)}.`; }
+  return s.alive ? text : "";
+}
+function ruin() {
+  const j = s.job;
+  const foe = pick(RUIN_FOES);
+  return {
+    combat: { name: foe, desc: "무너진 회랑 깊은 곳. 먼지 쌓인 받침대 위에 무언가가 놓여 있다.", str: 45 + j.rank * 12, yieldAt: 15, cause: `유적에서 ${foe}에게` },
+    win() {
+      const m = rand(2000, 5000) * (j.rank + 1);
+      s.money += m; j.exp++;
+      let text = `${foe}을(를) 쓰러뜨리고 유적의 잔해를 팔아 ${fmt(m)}안을 벌었다.`;
+      const left = RELICS.filter(r => !(s.relics || []).includes(r.name));
+      if (left.length && chance(0.4)) text += " " + gainRelic(pick(left));
+      if (j.rank < 3 && j.exp >= (j.rank + 1) * 3) { j.rank++; j.exp = 0; setJob(j); text += ` 지금은 ${jobLabel(j)}.`; }
+      return text;
+    },
+    lose() { return "유적에서 쫓겨났다. 받침대 위의 것은 손에 넣지 못했다."; },
+  };
+}
+function gainRelic(r) {
+  (s.relics || (s.relics = [])).push(r.name);
+  if (r.stat) gain(r.stat, 10);
+  if (r.rep) s.rep += r.rep;
+  achieve("relic");
+  if (s.relics.length >= 5) achieve("relic5");
+  return `유물 「${r.name}」을(를) 손에 넣었다. ${r.desc} (위력 +${r.pow})`;
+}
+function sellRelic() {
+  return {
+    title: "유물 경매",
+    text: "날개의 수집가와 손가락의 대리인이 같은 줄에 앉아 있다. 무엇을 내놓을까.",
+    choices: [
+      ...s.relics.map(n => ({ label: `「${n}」`, sub: `위력 -${relicOf(n).pow}`, run() {
+        const m = rand(20000, 60000);
+        s.relics = s.relics.filter(x => x !== n);
+        s.money += m;
+        return `「${n}」이(가) ${fmt(m)}안에 낙찰되었다. 손이 가벼워졌다.`;
+      } })),
+      { label: "내놓지 않는다", run: () => "경매장을 나왔다." },
+    ],
+  };
+}
+
 function quitJob() {
   const j = s.job;
   if (j.type === "claw") { die("발톱의 자리를 떠나려 했다. 머리를 떠난 발톱은 존재하지 않는다"); return ""; }
@@ -1125,6 +1252,29 @@ const EVENTS = [
     win() { s.zealot = Math.max(0, s.zealot - 1); s.rep += 4; return s.zealot ? "광신도들을 물리쳤다. 그래도 그들은 다시 올 것이다." : "광신도들을 물리쳤다. 한동안은 따라오지 않을 것 같다."; },
     lose() { strain(rand(10, 20), "못 박히는 고통에"); return s.alive ? "팔다리에 못이 박혔다. 의체 부분만 골라서 박았다." : ""; },
     fled() { return "골목을 몇 개나 돌아 겨우 따돌렸다."; },
+  }) },
+  { id: "bloodInvite", w: () => (!s.vampire && s.age >= 18 && s.job?.type !== "bloodHunter" && s.zone !== "spider" && s.zone !== "sisyphe" ? (s.job?.type === "butler" && s.job.rank >= 2 ? 2 : 0.5) : 0), run: () => {
+    const butler = s.job?.type === "butler";
+    return {
+      title: "핏빛 초대",
+      text: butler ? `${s.job.house}의 주인이 은잔을 내밀었다. "오래 모셨으니 상을 주지. 영원히 내 곁에 있거라."` : "새벽, 창백한 손님이 문을 두드렸다. \"늙지도, 굶지도 않는 삶을 주지. 대가는 피 몇 방울이면 된다.\"",
+      choices: [
+        { label: "피를 받아들인다", sub: "혈귀가 된다 · 늙지 않지만 해마다 피가 필요하다", run: () => becomeVampire(butler ? "주인의 피를 마셨다." : "목덜미에 이빨이 닿았다.") },
+        { label: "거절한다", run() { gain("temp", 3); return butler ? "고개를 숙이고 잔을 물렸다. 주인은 웃었지만 눈은 웃지 않았다." : "문을 닫았다. 문틈으로 차가운 바람이 오래 새어 들었다."; } },
+      ],
+    };
+  } },
+  { id: "bloodHunters", w: () => (s.vampire && s.zone !== "sisyphe" ? 1.8 : 0), run: () => ({
+    combat: { name: "혈귀 사냥꾼들", desc: "은 탄환과 말뚝을 든 사냥꾼들이 문을 부수고 들어왔다.", str: 55 + s.vampire.rank * 10, yieldAt: 15, cause: "혈귀 사냥꾼들의 말뚝에 심장이 꿰뚫려" },
+    win() { s.rep -= 3; drink(); return "사냥꾼들을 쓰러뜨리고 그들의 피를 마셨다."; },
+    lose() { s.vampire.thirst++; return "은 탄환을 맞고 하수구로 도망쳤다. 갈증이 더 심해졌다."; },
+    fled() { return "안개처럼 창문 밖으로 빠져나갔다."; },
+  }) },
+  { id: "graveRobbers", w: () => ((s.relics || []).length && s.zone !== "spider" && s.zone !== "sisyphe" ? 1 : 0), run: () => ({
+    combat: { name: "유물을 노리는 도굴꾼들", desc: "누군가 유물 이야기를 흘렸다. 한밤중에 창문이 깨졌다.", str: 55, yieldAt: 15, cause: "도굴꾼들에게" },
+    win() { s.rep += 2; return "도굴꾼들을 쫓아냈다. 유물은 무사하다."; },
+    lose() { const n = pick(s.relics); s.relics = s.relics.filter(x => x !== n); return `「${n}」을(를) 빼앗겼다.`; },
+    fled() { const n = pick(s.relics); s.relics = s.relics.filter(x => x !== n); return `목숨은 건졌지만 「${n}」을(를) 두고 도망쳤다.`; },
   }) },
   { id: "broadcast", w: () => 2, run() {
     strain(5);
@@ -1418,6 +1568,7 @@ function passive() {
   else if (j?.type === "hlord") income = 50000;
   else if (j?.type === "sailor") income = 1200 + j.rank * 2000;
   else if (j?.type === "claw") income = 30000;
+  else if (j?.type === "butler") income = 4000 + j.rank * 3000;
   if (income) { s.money += income; say(`${jobLabel(j)} 수입 ${fmt(income)}안.`, "act"); }
   if (s.age >= 18) {
     const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, sisyphe: 200 })[s.zone] + s.kids * (nestLike(s) ? 1500 : 300);
@@ -1431,14 +1582,23 @@ function passive() {
   if (s.money >= 1000000) achieve("rich");
   // 자연 회복과 노화
   heal(s.age < 40 ? 12 : 6, 8);
-  if (s.age >= 45) { gain("fort", -1); hurt(rand(1, 4) + Math.floor((s.age - 45) / 6), "노쇠하여"); }
+  if (s.vampire && s.alive) {
+    s.vampire.thirst++;
+    if (s.vampire.thirst >= 2) { hurt(rand(15, 30), "피에 굶주려 말라 죽었다"); strain(rand(5, 10)); if (s.alive) say("피를 마시지 못한 몸이 안쪽부터 말라 간다.", "bad"); }
+  }
+  for (const n of s.relics || []) {
+    if (!s.alive) break;
+    const r = relicOf(n);
+    if (r.curse === "hp") hurt(rand(2, 6), `유물 「${n}」에 생명을 빼앗겨`); else strain(rand(2, 6), `유물 「${n}」에 잠식되어`);
+  }
+  if (s.age >= 45 && !s.vampire) { gain("fort", -1); hurt(rand(1, 4) + Math.floor((s.age - 45) / 6), "노쇠하여"); }
   if (s.ego && !s.ego.stable && s.alive) strain(rand(4, 10), "불안정한 E.G.O에 잠식되어");
   if (s.job?.type === "claw" && s.alive) strain(rand(3, 8), "발톱의 의무에");
   if (s.taboo && s.alive && chance(0.35)) {
     if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
     else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다", true);
   }
-  if (s.alive && s.age >= 58 && chance((s.age - 55) * 0.016 + (s.zone === "back" ? 0.02 : 0))) {
+  if (s.alive && !s.vampire && s.age >= 58 && chance((s.age - 55) * 0.016 + (s.zone === "back" ? 0.02 : 0))) {
     achieve("oldage");
     die("노환으로 잠든 채 세상을 떠났다. 이 도시에서 드문 죽음이다", true);
   }
@@ -1564,6 +1724,8 @@ function renderSheet() {
       ${s.heir && !s.heir.head ? `<dt>후계 다툼</dt><dd>${s.heir.wins} / 3승</dd>` : ""}
       ${s.spider && !s.spider.done ? `<dt>아비의 가르침</dt><dd class="teach">${Object.keys(ABI).filter(n => s.spider.abi.includes(n)).map(n => `${n} ${teachOf(n)}`).join(" · ")}</dd>` : ""}
       ${s.shin ? `<dt>신(心)</dt><dd>${s.shin} · 망 최대 ${maxRings(s)}겹</dd>` : ""}
+      ${s.vampire ? `<dt>혈귀</dt><dd>${BLOOD_RANKS[s.vampire.rank]} · 갈증 ${s.vampire.thirst}</dd>` : ""}
+      ${(s.relics || []).length ? `<dt>수집한 유물</dt><dd>${s.relics.map(esc).join(", ")}</dd>` : ""}
       <dt>가족</dt><dd>${esc(fam)}</dd>
     </dl>
     ${s.ach.length || s.taboo || s.ego || s.zealot ? `<div class="chips">${s.ego ? `<span class="chip${s.ego.stable ? "" : " warn"}">E.G.O 「${esc(s.ego.name)}」${s.ego.stable ? "" : " · 불안정"}</span>` : ""}${s.taboo ? `<span class="chip warn">발톱의 주시</span>` : ""}${s.zealot ? `<span class="chip warn">광신도의 표적</span>` : ""}${s.ach.map(a => `<span class="chip">${ACH[a]}</span>`).join("")}</div>` : ""}
@@ -1583,12 +1745,14 @@ const PHRASE = {
   canned: "경험 통조림을 딴다", clerk: "백화점 계산대에 선다", climb: "위층으로 올라간다", cinema: "상영관에서 지난 삶을 본다", leaveSisyphe: "옥상 문을 열고 형기를 마친다",
   heishouJoin: "흑수의 문을 두드린다", sailorJoin: "대호수로 가는 배에 오른다", pirateJoin: "해적선에 몸을 싣는다", hunterJoin: "금기사냥꾼과 계약한다",
   heishouWork: "흑수의 일을 한다", heirDuel: "경쟁 후보에게 결투를 신청한다", heirPolitics: "원로들 사이에서 세를 모은다", lordChallenge: "군주의 자리에 도전한다",
-  voyage: "항해에 나선다", sailorPromo: "선장의 눈에 들려 한다", plunder: "상선을 습격한다", hunt: "금기 위반자를 추적한다", execute: "처형을 집행한다", moveNest: "둥지로 이주한다", moveBack: "뒷골목으로 이사한다",
+  voyage: "항해에 나선다", sailorPromo: "선장의 눈에 들려 한다", plunder: "상선을 습격한다", hunt: "금기 위반자를 추적한다", execute: "처형을 집행한다",
+  bloodHunterJoin: "혈귀 사냥꾼 길드를 찾아간다", butlerJoin: "혈귀 가문의 버틀러로 들어간다", relicJoin: "유적 탐사대에 합류한다",
+  bloodHunt: "혈귀를 사냥하러 나간다", serve: "주인의 시중을 든다", ruin: "유적 깊숙이 들어간다", feed: "피를 마신다", sellRelic: "유물을 경매에 내놓는다", moveNest: "둥지로 이주한다", moveBack: "뒷골목으로 이사한다",
 };
 const PHRASE_SPIDER = { play: "실 사이에 숨어 혼자 논다", study: "몰래 숨겨 둔 책을 읽는다", train: "홀로 검을 휘두른다", rest: "방구석에서 숨을 고른다" };
 const SPIDER_OK = ["play", "study", "train", "rest", "shinLearn", "shinTrain", "egoCalm"];
 const phrase = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
-const SISYPHE_OK = ["study", "train", "rest", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe"];
+const SISYPHE_OK = ["study", "train", "rest", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe", "feed"];
 const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id)) && (s.zone !== "sisyphe" || SISYPHE_OK.includes(a.id));
 
 // 한 번에 최대 네 개의 선택지: 진로·일·생활에서 하나씩 우선, 나머지는 무작위
@@ -1596,7 +1760,9 @@ function makeOffer() {
   const ok = ACTIONS.filter(a => (a.ap ?? 1) > 0 && usable(a));
   const shuffled = list => list.map(a => [Math.random(), a]).sort((x, y) => x[0] - y[0]).map(x => x[1]);
   const first = g => shuffled(ok.filter(a => a.g === g))[0];
-  const out = [first("진로"), first("일"), chance(0.6) ? first("생활") : null].filter(Boolean);
+  // 목마른 혈귀에게는 피를 마시는 선택지가 반드시 뜬다
+  const out = [ok.find(a => a.id === "feed" && s.vampire?.thirst >= 1), first("진로"), first("일"), chance(0.6) ? first("생활") : null]
+    .filter((a, i, arr) => a && arr.indexOf(a) === i);
   for (const a of shuffled(ok.filter(a => !out.includes(a)))) { if (out.length >= 4) break; out.push(a); }
   return out.map(a => a.id);
 }
@@ -1708,7 +1874,7 @@ function renderIntro() {
 }
 
 function renderEnding() {
-  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.zone === "sisyphe" ? "시지프 백화점의 계단을 끝내 다 오르지 못했다." : s.ach.includes("sisypheOut") ? "백화점의 옥상에서 다시 도시로 걸어 나온 사람이었다." : s.araya === "lost" ? "끝내 알아보지 못한 붉은 리본이 있었다." : s.ach.includes("lord") ? "H사의 모든 가문이 그 이름 앞에 고개를 숙였다." : s.ach.includes("claw") ? "머리의 발톱으로 살았다. 그 이름은 어떤 기록에도 남지 않는다." : s.araya === "with" ? `아라야는 끝까지 ${gx("아버지", "어머니")}의 손을 놓지 않았다.` : s.araya === "vault" ? "금고 속의 약속은 끝내 지켜지지 않았다." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
+  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.vampire ? `${BLOOD_RANKS[s.vampire.rank]}으로 ${s.age}년을 살았다. 그동안 마신 피는 기억하지 않는다.` : (s.relics || []).length >= 3 ? "유물들은 주인을 잃고 다시 누군가의 손을 기다린다." : s.zone === "sisyphe" ? "시지프 백화점의 계단을 끝내 다 오르지 못했다." : s.ach.includes("sisypheOut") ? "백화점의 옥상에서 다시 도시로 걸어 나온 사람이었다." : s.araya === "lost" ? "끝내 알아보지 못한 붉은 리본이 있었다." : s.ach.includes("lord") ? "H사의 모든 가문이 그 이름 앞에 고개를 숙였다." : s.ach.includes("claw") ? "머리의 발톱으로 살았다. 그 이름은 어떤 기록에도 남지 않는다." : s.araya === "with" ? `아라야는 끝까지 ${gx("아버지", "어머니")}의 손을 놓지 않았다.` : s.araya === "vault" ? "금고 속의 약속은 끝내 지켜지지 않았다." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
   $("#screen").innerHTML = `
     <div class="game">
       ${renderSheet()}
