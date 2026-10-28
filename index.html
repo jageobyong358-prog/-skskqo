@@ -570,6 +570,7 @@ function endCombat(result) {
   $("#modalRoot").innerHTML = "";
   const sp = c.spec;
   let out = "";
+  if (result === "win") jyiUp({ yong: 2 });
   if (result === "win") out = sp.win ? sp.win(c.n) : `${c.e.name}을(를) 쓰러뜨렸다.`;
   else if (result === "lose") out = sp.lose ? sp.lose() : `${c.e.name}에게 졌다.`;
   else if (result === "fled") out = sp.fled ? sp.fled() : "싸움에서 물러났다.";
@@ -676,9 +677,10 @@ const ACTIONS = [
   { id: "racket", g: "일", label: "구역 수금", desc: "돈 ↑ · 평판 ↓", cond: () => s.job?.type === "synd", run: racket },
   { id: "fingerOp", g: "일", label: "지령 수행", desc: "큰 보상, 실패는 용서받지 못한다", cond: () => s.job?.type === "finger", run: fingerOp },
   { id: "heishouWork", g: "일", label: "흑수의 일", desc: "다른 지파와의 다툼 · 전투", cond: () => s.job?.type === "heishou", run: heishouWork },
-  { id: "heirDuel", g: "일", label: "후계 결투", desc: "다른 가문의 후보와 결투 · 3승하면 H사 가주", cond: () => s.heir && !s.heir.head, run: heirDuel },
-  { id: "heirPolitics", g: "일", label: "원로 포섭", desc: "신중·자제로 세를 모은다", cond: () => s.heir && !s.heir.head, run: heirPolitics },
-  { id: "lordChallenge", g: "일", label: "군주에 도전", desc: "목숨을 건 싸움 · 상대 위력 120 · 망 3겹", cond: () => s.job?.type === "hhead", block: () => s.rep < 50 && "명성 50 필요", run: lordChallenge },
+  { id: "heirDuel", g: "일", label: "후계 결투", desc: "다른 가문의 후보와 결투 · 용 +5 · 3승 필요", cond: () => s.heir && !s.heir.head && s.heir.wins < 3, run: heirDuel },
+  { id: "heirPolitics", g: "일", label: "원로 포섭", desc: "신중·자제로 세를 모은다 · 지 +5", cond: () => s.heir && !s.heir.head && s.heir.wins < 3, run: heirPolitics },
+  { id: "becomeHead", g: "일", label: "가주 취임", desc: "3승과 지·용·인 모두 100", cond: () => s.heir && !s.heir.head && s.heir.wins >= 3, block: () => !jyiFull() && `지·용·인 모두 100 필요 (${jyiText()})`, run: becomeHead },
+  { id: "lordChallenge", g: "일", label: "군주에 도전", desc: "목숨을 건 싸움 · 상대 위력 120 · 망 3겹", cond: () => s.job?.type === "hhead", block: () => (s.rep < 50 && "명성 50 필요") || (!jyiFull() && `지·용·인 모두 100 필요 (${jyiText()})`), run: lordChallenge },
   { id: "voyage", g: "일", label: "항해", desc: "돈 · 실적 · 호수의 괴물", cond: () => s.job?.type === "sailor", run: voyage },
   { id: "sailorPromo", g: "일", label: "진급", desc: "실적과 신중 · 끝은 선장", cond: () => s.job?.type === "sailor" && s.job.rank < 3, block: () => s.job.exp < (s.job.rank + 1) * 2 && `실적 ${(s.job.rank + 1) * 2} 필요 (현재 ${s.job.exp})`, run: sailorPromo },
   { id: "plunder", g: "일", label: "약탈", desc: "상선 습격 · 전투 · 명성 ↓", cond: () => s.job?.type === "pirate", run: plunder },
@@ -919,6 +921,22 @@ function heishouWork() {
     lose() { s.rep -= 2; return "다툼에서 밀려났다. 지파의 체면이 깎였다."; },
   };
 }
+// ───── 지(智) · 용(勇) · 인(仁) ─────
+// H사의 가주나 군주가 되려면 셋이 모두 100이어야 한다. 선택지의 효과로 쌓인다.
+const JYI = [["ji", "지"], ["yong", "용"], ["in", "인"]];
+const JYI_GAIN = {
+  study: { ji: 3 }, news: { ji: 2 }, diary: { ji: 2 }, workshop: { ji: 2 }, heirPolitics: { ji: 5 }, meditate: { ji: 1, in: 1 },
+  train: { yong: 3 }, heirDuel: { yong: 5 },
+  volunteer: { in: 4 }, social: { in: 2 }, cook: { in: 1 }, walk: { in: 1 },
+};
+function jyiUp(gains) {
+  const v = s.jyi || (s.jyi = { ji: 0, yong: 0, in: 0 });
+  for (const [k, n] of Object.entries(gains)) v[k] = clamp(v[k] + n, 0, 100);
+}
+const jyiFull = () => !!s.jyi && JYI.every(([k]) => s.jyi[k] >= 100);
+const jyiText = () => JYI.map(([k, n]) => `${n} ${(s.jyi || {})[k] || 0}`).join(" · ");
+const jyiShown = () => s.zone === "hcorp" || !!s.hFamily || !!s.heir;
+
 function becomeHead() {
   s.heir.head = true;
   setJob({ type: "hhead", family: s.hFamily });
@@ -930,12 +948,12 @@ function heirDuel() {
   const house = pick(H_FAMILIES.filter(f => f !== s.hFamily));
   return {
     combat: { name: `${house}의 후보 ${rival}`, desc: `H사 가주의 자리를 노리는 ${house}의 후보. H사의 가주는 단 한 사람이다.`, str: 45 + s.heir.wins * 18, yieldAt: 15, cause: `후계 다툼에서 ${rival}에게` },
-    win() { s.heir.wins++; s.rep += 5; return s.heir.wins >= 3 ? becomeHead() : `${rival}을(를) 꺾었다. 후계 다툼 ${s.heir.wins}승.`; },
+    win() { s.heir.wins++; s.rep += 5; return s.heir.wins >= 3 ? "세 번째 후보까지 꺾었다. 이제 지·용·인을 갖추면 가주의 자리에 오를 수 있다." : `${rival}을(를) 꺾었다. 후계 다툼 ${s.heir.wins}승.`; },
     lose() { s.rep -= 3; strain(rand(8, 15)); return s.alive ? `${rival}에게 졌다. 원로들이 고개를 저었다.` : ""; },
   };
 }
 function heirPolitics() {
-  if (chance(0.15 + (s.prud + s.temp) / 300)) { s.heir.wins++; return s.heir.wins >= 3 ? becomeHead() : `원로 한 명을 포섭했다. 후계 다툼 ${s.heir.wins}승.`; }
+  if (chance(0.15 + (s.prud + s.temp) / 300)) { s.heir.wins++; return s.heir.wins >= 3 ? "원로회의 과반이 편에 섰다. 이제 지·용·인을 갖추면 가주의 자리에 오를 수 있다." : `원로 한 명을 포섭했다. 후계 다툼 ${s.heir.wins}승.`; }
   strain(rand(8, 14), "가문의 암투에");
   return s.alive ? "찻잔 너머의 말들은 전부 칼이었다. 아무도 편에 서 주지 않았다." : "";
 }
@@ -1452,7 +1470,7 @@ const EVENTS = [
     title: "길거리 연주자",
     text: "녹슨 바이올린을 켜는 사람이 있다. 아무도 멈춰 서지 않는다.",
     choices: [
-      { label: "동전을 던진다 (100안)", cond: () => s.money >= 100, run() { s.money -= 100; heal(0, 10); return "연주자가 고개를 숙였다. 곡이 조금 밝아졌다."; } },
+      { label: "동전을 던진다 (100안)", cond: () => s.money >= 100, run() { s.money -= 100; heal(0, 10); jyiUp({ in: 2 }); return "연주자가 고개를 숙였다. 곡이 조금 밝아졌다."; } },
       { label: "끝까지 듣는다", run() { heal(0, 6); gain("temp", 1); return "한 곡이 끝날 때까지 서 있었다. 박수를 친 건 혼자였다."; } },
       { label: "지나친다", run: () => "발걸음을 재촉했다." },
     ] }) },
@@ -1460,7 +1478,7 @@ const EVENTS = [
     title: "길 잃은 아이",
     text: "골목 모퉁이에서 아이가 울고 있다. 3시 10분까지는 아직 시간이 있다.",
     choices: [
-      { label: "집을 찾아 준다", sub: "정의 ↑ · 각오 +1", run() { gain("just", 2); resolveUp(); if (chance(0.3)) { const m = rand(300, 1500); s.money += m; return `아이의 부모가 몇 번이고 고개를 숙이며 ${fmt(m)}안을 쥐여 주었다.`; } return "아이를 집 앞까지 데려다주었다. 문이 닫히는 소리가 오래 귀에 남았다."; } },
+      { label: "집을 찾아 준다", sub: "정의 ↑ · 각오 +1 · 인 +5", run() { gain("just", 2); resolveUp(); jyiUp({ in: 5 }); if (chance(0.3)) { const m = rand(300, 1500); s.money += m; return `아이의 부모가 몇 번이고 고개를 숙이며 ${fmt(m)}안을 쥐여 주었다.`; } return "아이를 집 앞까지 데려다주었다. 문이 닫히는 소리가 오래 귀에 남았다."; } },
       { label: "못 본 척한다", run() { strain(5); return "모퉁이를 돌았다. 울음소리가 계속 따라왔다."; } },
     ] }) },
   { id: "blackout", w: () => (s.zone !== "spider" && s.zone !== "sisyphe" ? 0.8 : 0), run() {
@@ -1910,6 +1928,7 @@ function doAction(a) {
   if (s.ap < cost) return;
   s.ap -= cost;
   if (cost) s.offer = null;
+  if (JYI_GAIN[a.id]) jyiUp(JYI_GAIN[a.id]);
   yearEntry();
   settle(a.run(), text => { say(text, "act"); s.last = text; afterAction(); });
 }
@@ -1986,6 +2005,7 @@ function renderSheet() {
       ${s.relic ? `<dt>유물</dt><dd>${s.relic}</dd><dt>기억</dt><dd>${s.memory ?? 100} / 100</dd>` : ""}
       ${s.hFamily ? `<dt>가문</dt><dd>${esc(s.hFamily)}</dd>` : ""}
       ${s.heir && !s.heir.head ? `<dt>후계 다툼</dt><dd>${s.heir.wins} / 3승</dd>` : ""}
+      ${jyiShown() ? `<dt>지·용·인</dt><dd>${jyiText()}</dd>` : ""}
       ${s.spider && !s.spider.done ? `<dt>아비의 가르침</dt><dd class="teach">${Object.keys(ABI).filter(n => s.spider.abi.includes(n)).map(n => `${n} ${teachOf(n)}`).join(" · ")}</dd>` : ""}
       <dt>각오</dt><dd>${s.resolve || 0}</dd>
       ${s.shin ? `<dt>신(心)</dt><dd>${s.shin} · 망 최대 ${maxRings(s)}겹</dd>` : ""}
@@ -2014,12 +2034,13 @@ const PHRASE = {
   augment: "의체 공방에 들른다",
   canned: "경험 통조림을 딴다", clerk: "백화점 계산대에 선다", climb: "위층으로 올라간다", cinema: "상영관에서 지난 삶을 본다", leaveSisyphe: "옥상 문을 열고 형기를 마친다",
   heishouJoin: "흑수의 문을 두드린다", sailorJoin: "대호수로 가는 배에 오른다", pirateJoin: "해적선에 몸을 싣는다", hunterJoin: "금기사냥꾼과 계약한다",
-  heishouWork: "흑수의 일을 한다", heirDuel: "경쟁 후보에게 결투를 신청한다", heirPolitics: "원로들 사이에서 세를 모은다", lordChallenge: "군주의 자리에 도전한다",
+  heishouWork: "흑수의 일을 한다", heirDuel: "경쟁 후보에게 결투를 신청한다", heirPolitics: "원로들 사이에서 세를 모은다", becomeHead: "H사 가주의 자리에 오른다", lordChallenge: "군주의 자리에 도전한다",
   voyage: "항해에 나선다", sailorPromo: "선장의 눈에 들려 한다", plunder: "상선을 습격한다", hunt: "금기 위반자를 추적한다", execute: "처형을 집행한다",
   bloodHunterJoin: "혈귀 사냥꾼 사무소의 문을 두드린다", butlerJoin: "저택의 경호 해결사로 들어간다", relicJoin: "유적 탐사대에 합류한다",
   bloodHunt: "혈귀를 사냥하러 나간다", serve: "저택을 지킨다", ruin: "유적 깊숙이 들어간다", feed: "피를 마신다", sellRelic: "유물을 경매에 내놓는다", moveNest: "둥지로 이주한다", moveBack: "뒷골목으로 이사한다",
 };
 const PHRASE_SPIDER = { play: "실 사이에 숨어 혼자 논다", study: "몰래 숨겨 둔 책을 읽는다", train: "홀로 검을 휘두른다", rest: "방구석에서 숨을 고른다" };
+const GOAL_IDS = ["becomeHead", "lordChallenge"];
 const SPIDER_OK = ["sleep", "babble", "crawl", "toy", "play", "study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm"];
 // 놀이는 사는 곳에 따라 다르게 부른다
 const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린이집 마당에서 뛰어논다", hcorp: "기와집 마당에서 뛰어논다", out: "폐허 사이를 뛰어다닌다" };
@@ -2050,12 +2071,15 @@ function renderTurn() {
   const season = (total === 1 ? ["한 해"] : total === 2 ? ["상반기", "하반기"] : ["봄", "여름", "가을"])[total - s.ap] || "한 해";
   const opts = s.offer.map(id => ACTIONS.find(a => a.id === id)).filter(a => a && usable(a));
   const tools = ACTIONS.filter(a => a.ap === 0 && a.cond() && s.zone !== "spider" && s.zone !== "sisyphe");
+  // 큰 목표는 조건이 덜 차도 무엇이 모자란지 보이도록 비활성으로 띄운다
+  const goals = ACTIONS.filter(a => GOAL_IDS.includes(a.id) && a.cond() && a.block && a.block());
   return `
     <section class="panel card turn">
       <div class="panel-head"><h3>${s.age}세, ${season}</h3><span class="ap">남은 선택 <b>${s.ap}</b> / ${total}</span></div>
       ${s.last ? `<p class="last">${esc(s.last)}</p>` : ""}
       <p class="scene">${esc(s.scene || "")} 무엇을 할까?</p>
       <div class="choices">${opts.map(a => `<button class="btn opt" id="opt-${a.id}" data-id="${a.id}">${esc(phrase(a))}<small>${esc(a.desc)}</small></button>`).join("")}</div>
+      ${goals.length ? `<div class="tools">${goals.map(a => `<button class="btn ghost" id="goal-${a.id}" disabled>${esc(phrase(a))}<small>${esc(a.block())}</small></button>`).join("")}</div>` : ""}
       <div class="tools">
         ${tools.map(a => { const b = a.block && a.block(); return `<button class="btn ghost opt" id="opt-${a.id}" data-id="${a.id}" ${b ? "disabled" : ""}>${esc(a.label)}<small>${esc(b || a.desc)}</small></button>`; }).join("")}
         <button class="btn ghost" id="skip">남은 시간을 흘려보낸다<small>${s.age + 1}세로 넘어간다</small></button>
