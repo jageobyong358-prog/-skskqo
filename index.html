@@ -291,6 +291,8 @@ const WHALES = [
 const TIANGANG = ["천괴성", "천강성", "천기성", "천한성", "천용성", "천웅성", "천맹성", "천위성", "천영성", "천귀성", "천부성", "천만성", "천고성", "천상성", "천우성", "천공성", "천속성", "천이성", "천구성", "천수성", "천검성", "천평성", "천죄성", "천손성", "천패성", "천뢰성", "천혜성", "천폭성", "천곡성", "천미성", "천교성", "천암성", "천퇴성", "천살성", "천재성", "천호성"];
 const DISHA = ["지괴성", "지살성", "지용성", "지걸성", "지웅성", "지위성", "지영성", "지기성", "지맹성", "지문성", "지정성", "지벽성", "지합성", "지강성", "지암성", "지축성", "지회성", "지좌성", "지우성", "지령성", "지수성", "지미성", "지희성", "지광성", "지비성", "지쾌성", "지명성", "지진성", "지퇴성", "지만성", "지은성", "지이성", "지리성", "지준성", "지락성", "지첩성", "지속성", "지계성", "지마성", "지요성", "지유성", "지복성", "지공성", "지손성", "지노성", "지찰성", "지악성", "지추성", "지장성", "지단성", "지각성", "지사성", "지음성", "지형성", "지평성", "지구성", "지적성", "지모성", "지폐성", "지건성", "지멸성", "지허성", "지주성", "지패성", "지묘성", "지전성", "지교성", "지혼성", "지보성", "지환성", "지월성", "지혜성"];
 const TAKEN_STARS = ["천퇴성", "지혜성"];
+// 별호가 있는 사람만 소지 소속으로 표시된다
+const starLine = st => (st.starKnown && st.birthStar ? `소지 · ${STAR_TIER[st.birthStar.tier]} ${st.birthStar.name}` : "");
 const STAR_TIER = { disha: "72지살", tiangang: "36천강" };
 const relicOf = n => RELICS.find(r => r.name === n);
 const SCENES = {
@@ -1985,7 +1987,7 @@ function renderSheet() {
       ${s.spider && !s.spider.done ? `<dt>아비의 가르침</dt><dd class="teach">${Object.keys(ABI).filter(n => s.spider.abi.includes(n)).map(n => `${n} ${teachOf(n)}`).join(" · ")}</dd>` : ""}
       <dt>각오</dt><dd>${s.resolve || 0}</dd>
       ${s.shin ? `<dt>신(心)</dt><dd>${s.shin} · 망 최대 ${maxRings(s)}겹</dd>` : ""}
-      ${s.starKnown && s.birthStar ? `<dt>별호</dt><dd>${STAR_TIER[s.birthStar.tier]} · ${s.birthStar.name}</dd>` : ""}
+      ${starLine(s) ? `<dt>소속</dt><dd>${starLine(s)}</dd>` : ""}
       ${s.vampire ? `<dt>혈귀</dt><dd>${BLOOD_RANKS[s.vampire.rank]} · 갈증 ${s.vampire.thirst}</dd>` : ""}
       ${s.tigerShells ? `<dt>맹호표탄</dt><dd>${s.tigerShells}발</dd>` : ""}
       ${(s.relics || []).length ? `<dt>수집한 유물</dt><dd>${s.relics.map(esc).join(", ")}</dd>` : ""}
@@ -2159,6 +2161,7 @@ function renderEnding() {
           <p class="epitaph">${esc(s.cause)}.<br>${esc(ep)}</p>
           <dl class="kv" style="max-width:360px">
             <dt>최고 경력</dt><dd>${esc(jobLabel(s.bestJob))}</dd>
+            ${starLine(s) ? `<dt>소속</dt><dd>${starLine(s)}</dd>` : ""}
             <dt>남긴 돈</dt><dd class="money">${fmt(s.money)}안</dd>
             <dt>업적</dt><dd>${s.ach.length}개</dd>
           </dl>
