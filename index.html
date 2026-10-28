@@ -209,8 +209,11 @@ const store = {
 // ───────── 세계 데이터 ─────────
 const VIRTUES = [["fort", "용기"], ["prud", "신중"], ["temp", "자제"], ["just", "정의"]];
 const GENDERS = { m: "남성", f: "여성" };
-const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽", wing: "날개 구역", spider: "거미집", hcorp: "H사 구역" };
-const ORIGINS = [["r", "무작위"], ["back", "뒷골목"], ["nest", "둥지"], ["wing", "날개"], ["out", "외곽"], ["hcorp", "H사"], ["spider", "거미집"]];
+const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽", wing: "날개 구역", spider: "거미집", hcorp: "H사 구역", sisyphe: "시지프 백화점" };
+// 시지프 백화점: N사의 금기를 어겨 시지프형을 받은 사람이 들어가는 곳. 층을 오르다 지면 지하 1층으로 굴러떨어진다.
+const FLOORS = ["지하 1층 푸드코트", "1층 잡화관", "2층 의류관", "3층 가전관", "4층 상영관", "옥상"];
+const FLOOR_FOES = ["푸드코트 점원", "잡화관 매니저", "의류관 마네킹들", "가전관 보안 요원", "상영관 안내원"];
+const isN = () => (s.job?.type === "wing" && s.job.co === "N사") || (s.zone === "wing" && s.wingCo === "N사");
 const nestLike = st => st.zone === "nest" || st.zone === "wing";
 const streetLike = st => st.zone === "back" || st.zone === "out";
 // 거미집의 아비들. 시오미 요루(소지)는 탈출 전까지 거미집에 남아 있다.
@@ -235,6 +238,7 @@ const SCENES = {
   nest: ["둥지의 거리는 오늘도 깨끗하다.", "광고판이 새 앰플을 자랑한다.", "검문소 앞 줄이 길다."],
   wing: ["날개의 로고가 새겨진 창 너머로 도시가 내려다보인다.", "사내 방송이 오늘의 생산 목표를 읽는다.", "보안 요원이 신분증을 다시 확인한다."],
   hcorp: ["기와지붕 너머로 H사의 깃발이 나부낀다.", "가문의 행렬이 지나가자 사람들이 고개를 숙인다.", "골목 찻집에서 흑수들이 낮은 목소리로 이야기한다."],
+  sisyphe: ["안내 방송이 오늘의 특가를 읽는다.", "에스컬레이터가 끝없이 올라간다.", "푸드코트에서 통조림 따는 소리가 들린다."],
   spider: ["천장에서 거미줄 같은 실이 늘어진다.", "복도 끝에서 아비의 발소리가 지나간다.", "어딘가에서 아비들이 웃는 소리가 들린다."],
 };
 const NAMES = ["로웰", "하윤", "이든", "세라", "도윤", "카린", "밀레", "준", "아델", "시오", "레오", "나윤", "에단", "루카", "미르", "소라", "벨", "그레타", "오스카", "유리", "하람", "티모", "이사", "펠릭스", "다온", "노아", "비비안", "로아"];
@@ -260,7 +264,7 @@ const EGO_NAMES = ["꺼지지 않는 등불", "가시 돋친 서약", "잿빛 �
 const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
-  spiderEscape: "거미집 탈출", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -308,7 +312,7 @@ const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3 + (st.eg
 const rankOf = v => (v >= 100 ? "EX" : ["I", "II", "III", "IV", "V"][Math.min(4, Math.floor(v / 20))]);
 // 성별에 따른 문구: gx(남성, 여성)
 const gx = (m, f) => (s && s.gender === "f" ? f : m);
-const where = st => (st.zone === "spider" ? "거미집" : st.zone === "hcorp" ? `${st.district}구 H사 구역` : st.zone === "wing" ? `${st.district}구 ${st.wingCo} 날개 구역` : `${st.district}구 ${ZONES[st.zone]}`);
+const where = st => (st.zone === "sisyphe" ? `시지프 백화점 ${FLOORS[st.floor || 0]}` : st.zone === "spider" ? "거미집" : st.zone === "hcorp" ? `${st.district}구 H사 구역` : st.zone === "wing" ? `${st.district}구 ${st.wingCo} 날개 구역` : `${st.district}구 ${ZONES[st.zone]}`);
 
 function jobLabel(j) {
   if (!j) return "없음";
@@ -397,7 +401,12 @@ function loseMemory(n) {
   s.memory = clamp((s.memory ?? 100) - n, 0, 100);
   if (s.memory <= 0) die("아라야시키를 휘두를 때마다 기억이 지워졌고, 마침내 자신이 누구인지조차 남지 않았다");
 }
-function die(cause) {
+function die(cause, final) {
+  if (s.zone === "sisyphe" && !final) {
+    s.hp = 100; s.sp = Math.max(s.sp, 50); s.floor = 0;
+    say(`${cause}. 그러나 눈을 뜨니 다시 지하 1층이었다. 시지프의 형벌은 죽음으로 끝나지 않는다.`, "bad");
+    return;
+  }
   s.alive = false;
   s.cause = cause;
   say(`${s.age}세, ${cause}`, "death");
@@ -462,6 +471,8 @@ function exchange(id) {
   } else {
     const d = Math.round(clamp((er - pr * 0.5) * 0.6 * (guard ? 0.5 : 1), 3, 45));
     c.log.push(`${head} 합에서 밀렸다. ${d}의 피해를 입었다.`);
+    // 목숨을 걸지 않은 싸움은 쓰러지는 데서 끝난다
+    if (e.yieldAt && s.hp - d <= e.yieldAt) { s.hp = Math.max(1, s.hp - d); return endCombat("lose"); }
     hurt(d, e.cause);
   }
   if (!s.alive) return endCombat("dead");
@@ -582,6 +593,12 @@ const ACTIONS = [
       }
       return `감정을 고르고 모으는 법을 되풀이했다. 신 숙련도 ${s.shin}.`;
     } },
+  { id: "canned", g: "생활", label: "경험 통조림", desc: "500안 · 덕목 하나 크게 ↑ · 정신 소모", cond: () => s.zone === "sisyphe", block: () => s.money < 500 && "500안 필요", run: cannedExperience },
+  { id: "clerk", g: "일", label: "백화점 점원", desc: "돈을 번다", cond: () => s.zone === "sisyphe",
+    run() { const m = rand(300, 900) + s.temp * 10; s.money += m; gain("temp", rand(1, 2)); return `계산대에 섰다. 손님들의 얼굴이 어딘가 낯익다. ${fmt(m)}안.`; } },
+  { id: "climb", g: "진로", label: "위층으로", desc: "층 지기와 전투 · 지면 지하 1층으로", cond: () => s.zone === "sisyphe" && (s.floor || 0) < 5, run: climb },
+  { id: "cinema", g: "생활", label: "상영관", desc: "지난 삶을 본다 · 정신 회복", cond: () => s.zone === "sisyphe" && s.floor >= 4, run: cinema },
+  { id: "leaveSisyphe", g: "진로", label: "형기를 마친다", desc: "옥상에서 도시로 돌아간다", cond: () => s.zone === "sisyphe" && s.floor === 5, run: leaveSisyphe },
   { id: "egoCalm", g: "생활", label: "E.G.O 다스리기", desc: "불안정한 E.G.O를 안정시킨다 · 정신 소모", cond: () => s.ego && !s.ego.stable,
     run() {
       if (chance(0.15 + (s.temp + s.prud) / 400)) { s.ego.stable = true; achieve("ego"); heal(0, 30); return `「${s.ego.name}」의 균열이 메워졌다. 이제 이 E.G.O는 온전히 나의 것이다.`; }
@@ -657,7 +674,7 @@ function wingExam() {
   if (chance(p)) {
     const w = WINGS.find(x => x.co === s.wingCo) || pick(WINGS);
     setJob({ type: "wing", co: w.co, rank: 0 }); achieve("wing");
-    return `${w.co}에 합격했다. ${w.flavor} 날개의 그늘 아래로 들어갔다.`;
+    return `${w.co}에 합격했다. ${w.flavor} 날개의 그늘 아래로 들어갔다.${w.co === "N사" ? " 입사 서약의 첫 줄은 이랬다. 몸에 기계를 들이지 말 것." : ""}`;
   }
   return "불합격 통지를 받았다. 날개의 문은 좁다.";
 }
@@ -876,17 +893,18 @@ function quitJob() {
   return `${old} 일을 그만뒀다.`;
 }
 
+function breakN() { if (isN()) s.nTaboo = true; }
 function augment() {
   return {
     title: "의체 공방",
-    text: "녹슨 간판 아래 공방. 기술자가 카탈로그를 내민다.\n\"어디를 바꿔 드릴까. 돈만 있으면 뭐든 됩니다.\"",
+    text: `녹슨 간판 아래 공방. 기술자가 카탈로그를 내민다.\n"어디를 바꿔 드릴까. 돈만 있으면 뭐든 됩니다."${isN() ? "\nN사의 규율이 머릿속을 스친다. 몸에 기계를 들이는 것은 N사의 금기다." : ""}`,
     choices: [
       { label: "중고 팔 (3,000안)", sub: "용기 +6 · 정신 -8", cond: () => s.money >= 3000,
-        run() { s.money -= 3000; s.aug++; gain("fort", 6); strain(8, "의체 거부 반응으로"); return "중고 의수를 달았다. 전 주인의 버릇이 남아 있다."; } },
+        run() { s.money -= 3000; s.aug++; breakN(); gain("fort", 6); strain(8, "의체 거부 반응으로"); return "중고 의수를 달았다. 전 주인의 버릇이 남아 있다."; } },
       { label: "반사 신경 칩 (8,000안)", sub: "정의 +10 · 정신 -10", cond: () => s.money >= 8000,
-        run() { s.money -= 8000; s.aug++; gain("just", 10); strain(10, "신경 칩 부작용으로"); return "척추에 칩을 심었다. 세상이 조금 느리게 보인다."; } },
+        run() { s.money -= 8000; s.aug++; breakN(); gain("just", 10); strain(10, "신경 칩 부작용으로"); return "척추에 칩을 심었다. 세상이 조금 느리게 보인다."; } },
       { label: "전신 개조 (40,000안)", sub: "용기·정의 +18 · 정신 -20", cond: () => s.money >= 40000,
-        run() { s.money -= 40000; s.aug += 3; gain("fort", 18); gain("just", 18); strain(20, "전신 개조의 충격으로"); if (s.aug >= 5) achieve("aug"); return s.alive ? "몸의 절반 이상이 금속이 되었다. 거울 속 얼굴이 낯설다." : ""; } },
+        run() { s.money -= 40000; s.aug += 3; breakN(); gain("fort", 18); gain("just", 18); strain(20, "전신 개조의 충격으로"); if (s.aug >= 5) achieve("aug"); return s.alive ? "몸의 절반 이상이 금속이 되었다. 거울 속 얼굴이 낯설다." : ""; } },
       { label: "그냥 나간다", run: () => "카탈로그를 덮고 공방을 나왔다." },
     ],
   };
@@ -1093,6 +1111,26 @@ const EVENTS = [
     lose() { s.money = Math.floor(s.money / 2); setJob(null); return "붙잡혔다가 몸값을 치르고 풀려났다. 배와 동료는 남지 않았다."; },
     fled() { return "작은 보트로 갈아타고 안개 속으로 도망쳤다."; },
   }) },
+  { id: "broadcast", w: () => 2, run() {
+    strain(5);
+    return { title: "안내 방송", text: pick([
+      "\"고객님께 안내 말씀드립니다. 오늘의 특가는 이름 모를 해결사의 마지막 하루 통조림입니다.\"",
+      "\"형기를 마치신 고객님은 옥상 출구를 이용해 주십시오. 아직 이용하신 분은 많지 않습니다.\"",
+      "\"지하 1층에서 길을 잃은 어린이를 찾습니다. 아이는 자신의 이름을 기억하지 못합니다.\"",
+    ]) };
+  } },
+  { id: "peddler", w: () => (s.money >= 1000 ? 1.5 : 0), run: () => ({
+    title: "출처 모를 통조림",
+    text: "라벨이 뜯긴 통조림을 내미는 사람이 있다. \"정가보다 싸게 드릴게요. 뭐가 들었는지는 저도 몰라요.\"",
+    choices: [
+      { label: "산다 (1,000안)", run() {
+        s.money -= 1000;
+        if (chance(0.55)) { VIRTUES.forEach(([k]) => gain(k, 4)); return "누군가의 평생이 한꺼번에 밀려들었다. 모든 덕목 +4."; }
+        strain(rand(20, 35), "정체 모를 경험을 삼키고");
+        return s.alive ? "누군가의 마지막 순간이 들어 있었다. 며칠 동안 자신이 누구인지 헷갈렸다." : "";
+      } },
+      { label: "지나친다", run: () => "통조림 속의 사람에게 속으로 사과했다." },
+    ] }) },
   { id: "luck", w: () => (s.age >= 8 ? 1.5 : 0), run() { const m = rand(200, 3000); s.money += m; return { title: "횡재", text: `하수구 철망 사이에서 주인 없는 돈뭉치를 주웠다. ${fmt(m)}안.` }; } },
   { id: "sick", w: () => (s.age >= 35 ? 1 + s.age / 30 : 0.3), run() { hurt(rand(8, 25), "병으로"); return { title: "병치레", text: s.alive ? "한 해 내내 기침을 달고 살았다." : "" }; } },
   { id: "friend", w: () => (s.age >= 6 && s.age <= 30 ? 1.5 : 0), run() { heal(0, 15); gain("temp", 2); return { title: "친구", text: `${pick(NAMES)}라는 친구가 생겼다. 같이 웃을 일이 늘었다.` }; } },
@@ -1116,6 +1154,7 @@ const EVENTS = [
 ];
 
 const SPIDER_EVENTS = ["self", "egoRampage", "sick"];
+const SISYPHE_EVENTS = ["self", "egoRampage", "sick", "broadcast", "peddler"];
 function weighted(list) {
   const ws = list.map(e => Math.max(0, e.w()));
   const total = ws.reduce((a, b) => a + b, 0);
@@ -1300,6 +1339,57 @@ function gauntlet(list) {
   };
 }
 
+// ───────── 시지프 백화점 ─────────
+function nJudgment() {
+  return {
+    title: "N사의 심판",
+    text: "N사는 몸에 기계를 들인 자를 용서하지 않는다. 규율을 어긴 자에게 내려지는 벌은 하나, 시지프형이다.\n목에 밧줄이 감겼다. 숨이 끊어지기 직전, 세상이 하얗게 뒤집혔다.",
+    choices: [{ label: "눈을 뜬다", run: enterSisyphe }],
+  };
+}
+function enterSisyphe() {
+  s.nTaboo = false;
+  setJob(null);
+  s.zone = "sisyphe";
+  s.floor = 0;
+  VIRTUES.forEach(([k]) => { s[k] = 10; });
+  s.hp = 100; s.sp = 70;
+  achieve("sisyphe");
+  return "눈을 뜨니 백화점이었다. 시지프 백화점. 안내 방송이 흘러나온다.\n\"고객님의 모든 능력은 10으로 조정되었습니다. 형기를 마치실 때까지 즐거운 쇼핑 되십시오.\"\n지하 1층 푸드코트에서는 사람의 경험을 담은 통조림을 판다. 계산은 이곳에서도 안(安)으로 한다.";
+}
+function climb() {
+  const f = s.floor || 0;
+  const foe = FLOOR_FOES[f];
+  return {
+    combat: { name: foe, desc: `${FLOORS[f + 1]}로 가는 에스컬레이터 앞을 ${foe}이(가) 막아섰다. 지면 지하 1층까지 굴러떨어진다.`, str: 20 + f * 14, yieldAt: 20, cause: `${foe}에게 밀려` },
+    win() { s.floor = f + 1; return s.floor === 5 ? "마지막 계단을 올랐다. 옥상의 문이 열려 있다." : `${FLOORS[s.floor]}에 올라섰다.`; },
+    lose() { s.floor = 0; strain(rand(5, 12), "다시 바닥으로 떨어져"); return s.alive ? "에스컬레이터를 거꾸로 굴러떨어졌다. 다시 지하 1층이다. 돌을 밀어 올리던 누군가처럼." : ""; },
+    fled() { return "한 걸음 물러섰다. 에스컬레이터는 계속 올라가고 있다."; },
+  };
+}
+function cannedExperience() {
+  s.money -= 500;
+  const [k, n] = pick(VIRTUES);
+  const g = gain(k, rand(6, 12));
+  strain(rand(6, 14), "남의 경험을 삼키고");
+  const past = pick(["누군가의 첫 출근", "어느 해결사의 마지막 의뢰", "모르는 사람의 첫사랑", "어떤 아이의 생일"]);
+  return s.alive ? `경험 통조림을 땄다. ${past}의 맛이 났다. 그 사람은 지금 어디에 있을까. ${n} +${g}` : "";
+}
+function cinema() {
+  const lines = s.log.flatMap(y => y.e.filter(e => e.k === "event" || e.k === "good").map(e => [y.age, e.t]));
+  const [age, text] = lines.length ? pick(lines) : [0, "아무것도 상영되지 않았다."];
+  heal(0, 30); gain("prud", 3);
+  return `스크린에 ${age}세의 내가 나왔다. "${text}" 영화가 끝날 때까지 아무도 일어나지 않았다.`;
+}
+function leaveSisyphe() {
+  s.zone = "back";
+  s.district = rand(1, 25);
+  s.floor = null;
+  achieve("sisypheOut");
+  heal(30, 30);
+  return `옥상 문을 열자 도시의 하늘이 보였다. 형기가 끝났다. ${s.district}구 뒷골목의 녹슨 공기 속으로 다시 걸어 나왔다.`;
+}
+
 // ───────── 한 해 보내기 ─────────
 function passive() {
   const j = s.job;
@@ -1315,7 +1405,7 @@ function passive() {
   else if (j?.type === "claw") income = 30000;
   if (income) { s.money += income; say(`${jobLabel(j)} 수입 ${fmt(income)}안.`, "act"); }
   if (s.age >= 18) {
-    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200 })[s.zone] + s.kids * (nestLike(s) ? 1500 : 300);
+    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, sisyphe: 200 })[s.zone] + s.kids * (nestLike(s) ? 1500 : 300);
     s.money -= cost;
   }
   if (s.money < -3000) {
@@ -1331,11 +1421,11 @@ function passive() {
   if (s.job?.type === "claw" && s.alive) strain(rand(3, 8), "발톱의 의무에");
   if (s.taboo && s.alive && chance(0.35)) {
     if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
-    else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다");
+    else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다", true);
   }
   if (s.alive && s.age >= 58 && chance((s.age - 55) * 0.016 + (s.zone === "back" ? 0.02 : 0))) {
     achieve("oldage");
-    die("노환으로 잠든 채 세상을 떠났다. 이 도시에서 드문 죽음이다");
+    die("노환으로 잠든 채 세상을 떠났다. 이 도시에서 드문 죽음이다", true);
   }
 }
 
@@ -1349,11 +1439,12 @@ function advanceYear() {
   passive();
   if (!s.alive) return finish();
   queue = milestones();
+  if (s.nTaboo) queue.unshift({ run: nJudgment });
   if (s.age >= 4) {
     const n = s.age < 12 ? 1 : chance(0.55) ? 2 : 1;
     const used = new Set();
     for (let i = 0; i < n; i++) {
-      const ev = weighted(EVENTS.filter(e => !used.has(e.id) && (s.zone !== "spider" || SPIDER_EVENTS.includes(e.id))));
+      const ev = weighted(EVENTS.filter(e => !used.has(e.id) && (s.zone !== "spider" || SPIDER_EVENTS.includes(e.id)) && (s.zone !== "sisyphe" ? !SISYPHE_EVENTS.slice(3).includes(e.id) : SISYPHE_EVENTS.includes(e.id))));
       if (ev) { used.add(ev.id); queue.push(ev); }
     }
   }
@@ -1474,6 +1565,7 @@ const PHRASE = {
   quit: "일을 그만둔다", retire: "은퇴를 결심한다",
   shinLearn: "자신의 죄를 돌아본다", shinTrain: "신(心)을 수련한다", egoCalm: "불안정한 E.G.O를 다스린다",
   augment: "의체 공방에 들른다",
+  canned: "경험 통조림을 딴다", clerk: "백화점 계산대에 선다", climb: "위층으로 올라간다", cinema: "상영관에서 지난 삶을 본다", leaveSisyphe: "옥상 문을 열고 형기를 마친다",
   heishouJoin: "흑수의 문을 두드린다", sailorJoin: "대호수로 가는 배에 오른다", pirateJoin: "해적선에 몸을 싣는다", hunterJoin: "금기사냥꾼과 계약한다",
   heishouWork: "흑수의 일을 한다", heirDuel: "경쟁 후보에게 결투를 신청한다", heirPolitics: "원로들 사이에서 세를 모은다", lordChallenge: "군주의 자리에 도전한다",
   voyage: "항해에 나선다", sailorPromo: "선장의 눈에 들려 한다", plunder: "상선을 습격한다", hunt: "금기 위반자를 추적한다", execute: "처형을 집행한다", moveNest: "둥지로 이주한다", moveBack: "뒷골목으로 이사한다",
@@ -1481,7 +1573,8 @@ const PHRASE = {
 const PHRASE_SPIDER = { play: "실 사이에 숨어 혼자 논다", study: "몰래 숨겨 둔 책을 읽는다", train: "홀로 검을 휘두른다", rest: "방구석에서 숨을 고른다" };
 const SPIDER_OK = ["play", "study", "train", "rest", "shinLearn", "shinTrain", "egoCalm"];
 const phrase = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
-const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id));
+const SISYPHE_OK = ["study", "train", "rest", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe"];
+const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id)) && (s.zone !== "sisyphe" || SISYPHE_OK.includes(a.id));
 
 // 한 번에 최대 네 개의 선택지: 진로·일·생활에서 하나씩 우선, 나머지는 무작위
 function makeOffer() {
@@ -1498,7 +1591,7 @@ function renderTurn() {
   const total = apFor(s);
   const season = (total === 1 ? ["한 해"] : total === 2 ? ["상반기", "하반기"] : ["봄", "여름", "가을"])[total - s.ap] || "한 해";
   const opts = s.offer.map(id => ACTIONS.find(a => a.id === id)).filter(a => a && usable(a));
-  const tools = ACTIONS.filter(a => a.ap === 0 && a.cond() && s.zone !== "spider");
+  const tools = ACTIONS.filter(a => a.ap === 0 && a.cond() && s.zone !== "spider" && s.zone !== "sisyphe");
   return `
     <section class="panel card turn">
       <div class="panel-head"><h3>${s.age}세, ${season}</h3><span class="ap">남은 선택 <b>${s.ap}</b> / ${total}</span></div>
@@ -1555,7 +1648,7 @@ function renderIntro() {
         <div class="eyebrow">태어날 준비</div>
         <h2>도시에 태어난다는 것</h2>
         <p>머리가 금기를 정하고, 날개가 특이점으로 구를 먹여 살리고, 그 바깥 뒷골목에서는 새벽 3시 10분마다 청소부가 거리를 쓸어 간다.</p>
-        <p>태어날 곳을 고르거나 운에 맡겨라. 해마다 눈앞에 놓인 선택지 가운데 하나를 고르고, 찾아오는 사건 앞에서 다시 선택하라. 해결사가 되어 색을 얻을 수도, 날개의 사원이 될 수도, 골목에서 이름 없이 사라질 수도 있다.</p>
+        <p>태어날 곳은 고를 수 없다. 해마다 눈앞에 놓인 선택지 가운데 하나를 고르고, 찾아오는 사건 앞에서 다시 선택하라. 해결사가 되어 색을 얻을 수도, 날개의 사원이 될 수도, 골목에서 이름 없이 사라질 수도 있다.</p>
         <div class="field">
           <label for="nameInput">이름</label>
           <div class="field-row">
@@ -1571,12 +1664,6 @@ function renderIntro() {
             <label><input type="radio" name="gender" id="gender-r" value="r">무작위</label>
           </div>
         </div>
-        <div class="field">
-          <label id="originLabel">출생</label>
-          <div class="seg" role="radiogroup" aria-labelledby="originLabel">
-            ${ORIGINS.map(([k, n], i) => `<label><input type="radio" name="origin" id="origin-${k}" value="${k}" ${i === 0 ? "checked" : ""}>${n}</label>`).join("")}
-          </div>
-        </div>
         <button class="btn primary advance" id="born">태어난다</button>
       </section>
       <section class="card" style="padding:22px">
@@ -1589,7 +1676,7 @@ function renderIntro() {
     </div>`;
   $("#randName").addEventListener("click", () => { $("#nameInput").value = pick(NAMES); });
   $("#born").addEventListener("click", () => {
-    s = newLife($("#nameInput").value.trim(), document.querySelector('input[name="gender"]:checked')?.value, document.querySelector('input[name="origin"]:checked')?.value);
+    s = newLife($("#nameInput").value.trim(), document.querySelector('input[name="gender"]:checked')?.value);
     s.ap = apFor(s);
     const kid = gx("아들", "딸");
     const birth = {
@@ -1606,7 +1693,7 @@ function renderIntro() {
 }
 
 function renderEnding() {
-  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.araya === "lost" ? "끝내 알아보지 못한 붉은 리본이 있었다." : s.ach.includes("lord") ? "H사의 모든 가문이 그 이름 앞에 고개를 숙였다." : s.ach.includes("claw") ? "머리의 발톱으로 살았다. 그 이름은 어떤 기록에도 남지 않는다." : s.araya === "with" ? `아라야는 끝까지 ${gx("아버지", "어머니")}의 손을 놓지 않았다.` : s.araya === "vault" ? "금고 속의 약속은 끝내 지켜지지 않았다." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
+  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.zone === "sisyphe" ? "시지프 백화점의 계단을 끝내 다 오르지 못했다." : s.ach.includes("sisypheOut") ? "백화점의 옥상에서 다시 도시로 걸어 나온 사람이었다." : s.araya === "lost" ? "끝내 알아보지 못한 붉은 리본이 있었다." : s.ach.includes("lord") ? "H사의 모든 가문이 그 이름 앞에 고개를 숙였다." : s.ach.includes("claw") ? "머리의 발톱으로 살았다. 그 이름은 어떤 기록에도 남지 않는다." : s.araya === "with" ? `아라야는 끝까지 ${gx("아버지", "어머니")}의 손을 놓지 않았다.` : s.araya === "vault" ? "금고 속의 약속은 끝내 지켜지지 않았다." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
   $("#screen").innerHTML = `
     <div class="game">
       ${renderSheet()}
