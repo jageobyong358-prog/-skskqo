@@ -1330,7 +1330,7 @@ const EVENTS = [
     lose() { strain(rand(10, 20), "못 박히는 고통에"); return s.alive ? "팔다리에 못이 박혔다. 의체 부분만 골라서 박았다." : ""; },
     fled() { return "골목을 몇 개나 돌아 겨우 따돌렸다."; },
   }) },
-  { id: "bloodInvite", w: () => (!s.vampire && s.age >= 18 && s.job?.type !== "bloodHunter" && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.5 : 0), run: () => {
+  { id: "bloodInvite", w: () => (!s.vampire && s.age >= 50 && s.age < 70 && s.job?.type !== "bloodHunter" && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.5 : 0), run: () => {
     return {
       title: "핏빛 초대",
       text: "새벽, 창백한 손님이 문을 두드렸다. \"늙지도, 굶지도 않는 삶을 주지. 대가는 피 몇 방울이면 된다.\"",
