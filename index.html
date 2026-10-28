@@ -260,7 +260,7 @@ const RELICS = [
   { name: "마에스트로의 반지", pow: 10, stat: "temp", hidden: true, desc: "약지 마에스트로의 증표. 끼고 있으면 모든 것이 재료로 보인다." },
   // 붉은 안개의 전리품
   { name: "미미크리 [프로토타입]", pow: 30, curse: "hp", hidden: true, desc: "붉은 안개가 쓰던 E.G.O 무기의 시제품. 벤 것을 먹고 주인의 피도 탐낸다." },
-  { name: "바퀴황제의 껍질", pow: 26, curse: "sp", hidden: true, desc: "G사 결전병기의 정점이 두르던 검은 껍질. 걸치면 총알이 튕겨 나가고, 밤마다 벌레의 꿈을 꾼다." },
+  { name: "다스리는 황제의 왕관", pow: 30, rep: 30, curse: "sp", hidden: true, desc: "연기 전쟁의 전장을 다스리던 바퀴황제의 왕관. 쓰면 벌레들이 고개를 숙이고, 밤마다 군단의 발소리가 들린다." },
   { name: "지혜성도", pow: 20, hidden: true, desc: "소지의 오오타치. 베고 지나간 자리에 파란 검흔이 남는다." },
   { name: "자양화", pow: 8, stat: "temp", hidden: true, desc: "푸른 수국 장식. 쥐고 있으면 이유 모를 그리움이 밀려온다." },
   // 대호수의 전리품
@@ -531,7 +531,7 @@ function exchange(id) {
   if (id === "araya") { const lost = rand(3, 7); bonus = 30; mult = 1.6; tag = `아라야시키 · 기억 -${lost}`; loseMemory(lost); }
   if (!s.alive) return endCombat("dead");
   const pr = Math.round(power(s) * 0.6 + bonus + rand(0, 25));
-  const er = Math.round(e.str * 0.6 * (e.clashScale || 1) + (e.mang || 0) * 10 + rand(0, 25) - (e.easy || 0));
+  const er = Math.round(curStr(c) * 0.6 * (e.clashScale || 1) + (e.mang || 0) * 10 + rand(0, 25) - (e.easy || 0));
   const head = `${c.n}합${tag ? ` · ${tag}` : ""} — ${pr} 대 ${er}.`;
   if (pr >= er) {
     const d = Math.round(clamp((pr - er * 0.5) * mult * (guard ? 0.5 : 1) * (e.dmgMult || 1), 4, e.noCap ? Infinity : 90));
@@ -550,6 +550,8 @@ function exchange(id) {
   c.n++;
   drawCombat();
 }
+// ramp가 있는 상대는 정해진 합마다 위력이 오른다
+function curStr(c) { const r = c.e.ramp; return c.e.str + (r ? Math.floor((c.n - 1) / r.every) * r.add : 0); }
 function endCombat(result) {
   const c = combat;
   combat = null;
@@ -575,7 +577,7 @@ function drawCombat() {
           <div>${bar("나의 체력", s.hp, "var(--blood)")}${bar("정신력", s.sp, "var(--mind)", spMax(s))}</div>
           <div class="bar"><div class="bar-head"><span>${esc(e.name)}</span><span>${Math.max(0, c.ehp)} / ${c.emax}</span></div>
             <div class="bar-track"><div class="bar-fill" style="width:${clamp(c.ehp / c.emax * 100, 0, 100)}%;background:var(--brass)"></div></div>
-            <div class="foe-meta">위력 ${e.str}${e.mang ? ` · 망 ${e.mang}겹` : ""}${e.easy ? ` · 가르침 덕에 -${e.easy}` : ""} · 나의 위력 ${Math.round(power(s))}</div></div>
+            <div class="foe-meta">위력 ${curStr(c)}${e.ramp ? ` (${e.ramp.every}합마다 +${e.ramp.add})` : ""}${e.mang ? ` · 망 ${e.mang}겹` : ""}${e.easy ? ` · 가르침 덕에 -${e.easy}` : ""} · 나의 위력 ${Math.round(power(s))}</div></div>
         </div>
         <div class="clash">${c.log.slice(-3).map(l => `<p>${esc(l)}</p>`).join("") || "<p>서로의 거리를 잰다.</p>"}</div>
         <div class="moves">
@@ -1357,22 +1359,22 @@ const EVENTS = [
     fled() { return "안개처럼 창문 밖으로 빠져나갔다."; },
   }) },
   // 히든 보스: 뇌횡 (체력 2000 · 망 1 · 위력 120)
-  // 히든 보스: G사 결전병기 바퀴황제 (체력 3000 · 위력 180 · 망 없음)
-  { id: "roachEmperor", w: () => (!s.roachDone && s.age >= 25 && power(s) >= 160 && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.3 : 0), run: () => ({
+  // 히든 보스: 바퀴황제 (체력 5400 · 위력 190, 3합마다 +10 · 망 없음)
+  { id: "roachEmperor", w: () => (!s.roachDone && s.age >= 25 && power(s) >= 180 && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.3 : 0), run: () => ({
     title: "바퀴황제",
-    text: "7구 폐연구동 쪽에서 수천 개의 다리가 바닥을 긁는 소리가 밀려왔다.\n검은 껍질로 뒤덮인 거구가 골목을 가득 메운다. G사의 결전병기, 바퀴황제.\n연기 전쟁이 끝난 지 오래인데도, 그것은 아직 전쟁 중이다.",
+    text: "7구 폐연구동 쪽에서 수천 개의 다리가 바닥을 긁는 소리가 밀려왔다.\n검은 껍질로 뒤덮인 거구가 골목을 가득 메운다. (구)G사의 결전병기, 연기 전쟁의 바퀴황제.\n연기 전쟁이 끝난 지 오래인데도, 그것은 아직 전쟁 중이다.",
     choices: [
-      { label: "맞선다", sub: "체력 3000 · 위력 180 · 처치하면 바퀴황제의 껍질", run: () => ({
+      { label: "맞선다", sub: "체력 5400 · 위력 190 (3합마다 +10) · 처치하면 다스리는 황제의 왕관", run: () => ({
         combat: {
-          name: "G사 결전병기 바퀴황제", hp: 3000, str: 180, dmgMult: 4, hitMult: 0.45, noCap: true, yieldAt: 10,
-          desc: "G사가 연기 전쟁을 끝내려고 만든 결전병기. 껍질은 총알을 튕겨 내고, 잘린 다리는 금세 다시 돋는다.",
+          name: "바퀴황제", hp: 5400, str: 190, ramp: { every: 3, add: 10 }, dmgMult: 5, hitMult: 0.4, noCap: true, yieldAt: 10,
+          desc: "(구)G사 · 연기 전쟁. 전쟁을 끝내려고 만든 결전병기. 껍질은 총알을 튕겨 내고, 싸움이 길어질수록 군단이 깨어나 더 강해진다.",
           cause: "바퀴황제의 다리에 짓밟혀",
         },
         win(n) {
           s.roachDone = true;
           s.rep += 60;
           achieve("roachEmperor");
-          return `${n}합 끝에 바퀴황제가 뒤집힌 채 다리를 허우적거리다 멈췄다. 껍질 틈으로 오래된 G사 군번표가 떨어졌다. ${gainRelic(relicOf("바퀴황제의 껍질"))}`;
+          return `${n}합 끝에 바퀴황제가 뒤집힌 채 다리를 허우적거리다 멈췄다. 껍질 틈으로 오래된 G사 군번표가 떨어졌다. ${gainRelic(relicOf("다스리는 황제의 왕관"))}`;
         },
         lose() { return "다리 수십 개에 짓눌려 정신을 잃었다. 깨어났을 때 바퀴황제는 다시 폐연구동 쪽으로 기어가고 있었다."; },
         fled() { return "하수구 뚜껑을 열고 뛰어들었다. 머리 위로 수천 개의 다리가 지나갔다."; },
