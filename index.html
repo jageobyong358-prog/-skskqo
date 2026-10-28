@@ -260,6 +260,7 @@ const RELICS = [
   { name: "마에스트로의 반지", pow: 10, stat: "temp", hidden: true, desc: "약지 마에스트로의 증표. 끼고 있으면 모든 것이 재료로 보인다." },
   // 붉은 안개의 전리품
   { name: "미미크리 [프로토타입]", pow: 30, curse: "hp", hidden: true, desc: "붉은 안개가 쓰던 E.G.O 무기의 시제품. 벤 것을 먹고 주인의 피도 탐낸다." },
+  { name: "바퀴황제의 껍질", pow: 26, curse: "sp", hidden: true, desc: "G사 결전병기의 정점이 두르던 검은 껍질. 걸치면 총알이 튕겨 나가고, 밤마다 벌레의 꿈을 꾼다." },
   { name: "지혜성도", pow: 20, hidden: true, desc: "소지의 오오타치. 베고 지나간 자리에 파란 검흔이 남는다." },
   { name: "자양화", pow: 8, stat: "temp", hidden: true, desc: "푸른 수국 장식. 쥐고 있으면 이유 모를 그리움이 밀려온다." },
   // 대호수의 전리품
@@ -318,7 +319,7 @@ const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -591,8 +592,16 @@ function drawCombat() {
 // ───────── 행동 ─────────
 const ACTIONS = [
   // 기본
-  { id: "play", g: "기본", label: "놀기", desc: "정신 회복, 작은 성장", cond: () => s.age < 8,
-    run() { heal(0, 15); const st = pick(VIRTUES); gain(st[0], 1); return `골목에서 뛰어놀았다. ${st[1]} +1`; } },
+  { id: "sleep", g: "기본", label: "잠", desc: "체력·정신 회복", cond: () => s.age < 3,
+    run() { heal(10, 15); return pick(["하루 종일 잤다. 꿈속에서도 무언가를 쥐려는 듯 손가락을 오므렸다.", "누군가의 품에서 잠들었다.", "울다 지쳐 잠들었다."]); } },
+  { id: "babble", g: "기본", label: "옹알이", desc: "자제 또는 신중 ↑", cond: () => s.age < 3,
+    run() { const k = pick([["temp", "자제"], ["prud", "신중"]]); gain(k[0], 1); return `${pick(["처음으로 말 비슷한 소리를 냈다.", "천장을 보며 한참을 옹알거렸다.", "누군가의 얼굴을 보고 웃었다."])} ${k[1]} +1`; } },
+  { id: "crawl", g: "기본", label: "기어 다니기", desc: "용기 ↑", cond: () => s.age >= 1 && s.age < 3,
+    run() { gain("fort", 1); return `${s.zone === "spider" ? "실이 늘어진 바닥을" : nestLike(s) ? "깨끗한 마룻바닥을" : "차가운 바닥을"} 기어 다니며 온 집 안을 탐험했다. 용기 +1`; } },
+  { id: "toy", g: "기본", label: "장난감", desc: "신중 ↑ · 정신 회복", cond: () => s.age >= 2 && s.age < 6,
+    run() { gain("prud", 1); heal(0, 8); return `${s.zone === "spider" ? "아비가 던져 준 나무 조각" : nestLike(s) ? "날개 로고가 찍힌 블록" : "누군가 버린 낡은 인형"}을 가지고 놀았다. 신중 +1`; } },
+  { id: "play", g: "기본", label: "놀기", desc: "정신 회복, 작은 성장", cond: () => s.age >= 3 && s.age < 8,
+    run() { heal(0, 15); const st = pick(VIRTUES); gain(st[0], 1); const where0 = s.zone === "spider" ? "실 사이에 숨어 혼자 놀았다" : (PLAY_PLACE[s.zone] || "골목에서 뛰어논다").replace("논다", "놀았다").replace("다닌다", "다녔다"); return `${where0}. ${st[1]} +1`; } },
   { id: "study", g: "기본", label: "공부", desc: "신중 ↑ · 정신 소모", cond: () => s.age >= 5,
     run() { const n = gain("prud", rand(2, 5) + (nestLike(s) ? 2 : 0)); strain(rand(3, 8), "공부에 짓눌려"); return `책과 씨름했다. 신중 +${n}`; } },
   { id: "train", g: "기본", label: "단련", desc: "용기·정의 ↑ · 체력 소모", cond: () => s.age >= 8,
@@ -1115,20 +1124,21 @@ function augment() {
 
 // ───────── 연간 이벤트 ─────────
 const EVENTS = [
-  { id: "night", w: () => (s.zone === "back" && s.age >= 7 ? 5 : 0), run: () => ({
+  { id: "night", w: () => (s.zone === "back" && s.age >= 10 ? 1.8 : 0), run: () => ({
     title: "뒷골목의 밤",
     text: `${s.age < 15 ? `${gx("어머니", "아버지")} 심부름을 갔다 오는 길이 늦어졌다.` : "일이 늦게 끝났다."} 시계가 새벽 3시 10분을 향해 간다.\n이 시간, 거리에 남은 것은 무엇이든 청소부의 몫이 된다. 멀리서 무언가 끌리는 소리가 들린다.`,
     choices: [
       { label: "가장 가까운 문을 두드린다", sub: "자제", run() {
         if (chance(0.5 + s.temp / 200)) { gain("temp", 2); return "누군가 말없이 문을 열어 주었다. 3시 20분이 지날 때까지 숨을 죽였다."; }
-        hurt(rand(30, 60), "뒷골목의 밤, 청소부에게 붙잡혀");
+        hurt(rand(15, 35), "뒷골목의 밤, 청소부에게 붙잡혀");
         return s.alive ? "아무도 문을 열지 않았다. 골목 끝에서 다가온 것을 피하다 크게 다쳤다." : ""; } },
       { label: "집까지 전력으로 달린다", sub: "용기", run() {
         if (chance(0.35 + s.fort / 140)) { gain("fort", 2); return "심장이 터질 듯 달렸다. 문을 잠근 순간 바깥에서 액체 끓는 소리가 났다."; }
-        hurt(rand(40, 85), "뒷골목의 밤, 청소부에게 따라잡혀");
+        hurt(rand(20, 45), "뒷골목의 밤, 청소부에게 따라잡혀");
         return s.alive ? "등 뒤에서 무언가가 스쳤다. 살아서 집에 닿은 게 기적이다." : ""; } },
-      { label: "맞서 싸운다", sub: "전투 · 목숨을 건다", cond: () => s.age >= 14, run: () => ({
-        combat: { name: "청소부", desc: "기름 냄새를 풍기는 형체들이 골목을 메운다. 3시 20분까지 버티거나, 쓰러뜨려야 한다.", str: 52, cause: "뒷골목의 밤, 청소부와 맞서 싸우다" },
+      { label: "맞서 싸운다", sub: "전투", cond: () => s.age >= 16, run: () => ({
+        combat: { name: "청소부", desc: "기름 냄새를 풍기는 형체들이 골목을 메운다. 3시 20분까지 버티거나, 쓰러뜨려야 한다.", str: 45, yieldAt: 15, cause: "뒷골목의 밤, 청소부와 맞서 싸우다" },
+        lose() { return "청소부들에게 밀려 쓰러졌다. 3시 20분을 알리는 소리가 아니었다면 거기서 끝났을 것이다."; },
         win() { s.rep += 10; gain("just", 3); achieve("night"); return "청소부 하나를 베어 넘겼다. 나머지는 3시 20분을 알리는 소리와 함께 물러갔다."; },
         fled() { return "골목 틈으로 몸을 던져 빠져나왔다."; },
       }) },
@@ -1159,12 +1169,12 @@ const EVENTS = [
         return s.alive ? "다음 날 밤 그들이 다시 왔다. 손가락 두 마디를 잃었다." : ""; } },
     ] }) },
 
-  { id: "taboo", w: () => (s.age >= 22 && s.prud >= 40 && !s.taboo ? 1.2 : 0), run: () => ({
+  { id: "taboo", w: () => (s.age >= 22 && s.prud >= 40 && !s.taboo && !s.tabooOffered ? 0.8 : 0), run: () => ({
     title: "수상한 연구 제안",
     text: "익명의 후원자가 연구를 제안했다. 보수는 평생 만져 볼 수 없는 금액이다.\n주제를 들은 순간 등줄기가 서늘해졌다. 머리가 금기로 정한 영역이다.",
     choices: [
       { label: "받아들인다 (+60,000안)", sub: "금기 위반", run() { s.money += 60000; s.taboo = 1; achieve("taboo"); gain("prud", 6); return "연구에 손을 댔다. 돈은 들어왔다. 그날 이후 누군가 지켜보는 기분이 사라지지 않는다."; } },
-      { label: "거절하고 잊는다", run() { gain("temp", 3); resolveUp(); return "제안서를 태웠다. 현명한 선택이었다."; } },
+      { label: "거절하고 잊는다", run() { s.tabooOffered = true; gain("temp", 3); resolveUp(); return "제안서를 태웠다. 현명한 선택이었다."; } },
     ] }) },
 
   { id: "kitchen", w: () => (s.zone === "back" && s.age >= 15 ? 1.2 : 0), run: () => ({
@@ -1347,6 +1357,28 @@ const EVENTS = [
     fled() { return "안개처럼 창문 밖으로 빠져나갔다."; },
   }) },
   // 히든 보스: 뇌횡 (체력 2000 · 망 1 · 위력 120)
+  // 히든 보스: G사 결전병기 바퀴황제 (체력 3000 · 위력 180 · 망 없음)
+  { id: "roachEmperor", w: () => (!s.roachDone && s.age >= 25 && power(s) >= 160 && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.3 : 0), run: () => ({
+    title: "바퀴황제",
+    text: "7구 폐연구동 쪽에서 수천 개의 다리가 바닥을 긁는 소리가 밀려왔다.\n검은 껍질로 뒤덮인 거구가 골목을 가득 메운다. G사의 결전병기, 바퀴황제.\n연기 전쟁이 끝난 지 오래인데도, 그것은 아직 전쟁 중이다.",
+    choices: [
+      { label: "맞선다", sub: "체력 3000 · 위력 180 · 처치하면 바퀴황제의 껍질", run: () => ({
+        combat: {
+          name: "G사 결전병기 바퀴황제", hp: 3000, str: 180, dmgMult: 4, hitMult: 0.45, noCap: true, yieldAt: 10,
+          desc: "G사가 연기 전쟁을 끝내려고 만든 결전병기. 껍질은 총알을 튕겨 내고, 잘린 다리는 금세 다시 돋는다.",
+          cause: "바퀴황제의 다리에 짓밟혀",
+        },
+        win(n) {
+          s.roachDone = true;
+          s.rep += 60;
+          achieve("roachEmperor");
+          return `${n}합 끝에 바퀴황제가 뒤집힌 채 다리를 허우적거리다 멈췄다. 껍질 틈으로 오래된 G사 군번표가 떨어졌다. ${gainRelic(relicOf("바퀴황제의 껍질"))}`;
+        },
+        lose() { return "다리 수십 개에 짓눌려 정신을 잃었다. 깨어났을 때 바퀴황제는 다시 폐연구동 쪽으로 기어가고 있었다."; },
+        fled() { return "하수구 뚜껑을 열고 뛰어들었다. 머리 위로 수천 개의 다리가 지나갔다."; },
+      }) },
+      { label: "숨는다", run: () => "벽 틈에 몸을 밀어 넣고 숨을 참았다. 다리 소리가 멀어질 때까지 한참이 걸렸다." },
+    ] }) },
   { id: "leiHeng", w: () => (!s.leiHengDone && s.age >= 25 && power(s) >= 130 && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.4 : 0), run: () => ({
     title: "동부의 호랑이",
     text: "골목 끝에서 담배 연기가 피어올랐다. 중절모를 눌러쓴 사내가 칼집에 손을 얹는다.\n동부 엄지의 카포 IIII, 소지의 천퇴성, 동부십검. 뇌횡.\n\"소문난 놈이 있다길래 와 봤지. 실망시키지 마라.\"",
@@ -1487,7 +1519,7 @@ const EVENTS = [
       { label: "지나친다", run: () => "통조림 속의 사람에게 속으로 사과했다." },
     ] }) },
   { id: "luck", w: () => (s.age >= 8 ? 1.5 : 0), run() { const m = rand(200, 3000); s.money += m; return { title: "횡재", text: `하수구 철망 사이에서 주인 없는 돈뭉치를 주웠다. ${fmt(m)}안.` }; } },
-  { id: "sick", w: () => (s.age >= 35 ? 1 + s.age / 30 : 0.3), run() { hurt(rand(8, 25), "병으로"); return { title: "병치레", text: s.alive ? "한 해 내내 기침을 달고 살았다." : "" }; } },
+  { id: "sick", w: () => (s.age >= 50 ? 1 + s.age / 40 : 0.3), run() { hurt(rand(5, 18), "병으로"); return { title: "병치레", text: s.alive ? "한 해 내내 기침을 달고 살았다." : "" }; } },
   { id: "friend", w: () => (s.age >= 6 && s.age <= 30 ? 1.5 : 0), run() { heal(0, 15); gain("temp", 2); return { title: "친구", text: `${pick(NAMES)}라는 친구가 생겼다. 같이 웃을 일이 늘었다.` }; } },
   { id: "parentDeath", w: () => (s.parents > 0 && s.age >= 12 ? (s.zone === "back" ? 0.9 : 0.4) + s.age / 60 : 0), run() {
     s.parents--; strain(rand(15, 30), "가족을 잃은 슬픔에");
@@ -1796,7 +1828,7 @@ function passive() {
   }
   if (s.money >= 1000000) achieve("rich");
   // 자연 회복과 노화
-  heal(s.age < 40 ? 12 : 6, 8);
+  heal(s.age < 60 ? 18 : 10, 10);
   if (s.vampire && s.alive) {
     s.vampire.thirst++;
     if (s.vampire.thirst >= 2) { hurt(rand(15, 30), "피에 굶주려 말라 죽었다"); strain(rand(5, 10)); if (s.alive) say("피를 마시지 못한 몸이 안쪽부터 말라 간다.", "bad"); }
@@ -1807,14 +1839,14 @@ function passive() {
     if (!r.curse) continue;
     if (r.curse === "hp") hurt(rand(2, 6), `유물 「${n}」에 생명을 빼앗겨`); else strain(rand(2, 6), `유물 「${n}」에 잠식되어`);
   }
-  if (s.age >= 45 && !s.vampire) { gain("fort", -1); hurt(rand(1, 4) + Math.floor((s.age - 45) / 6), "노쇠하여"); }
+  if (s.age >= 60 && !s.vampire) { gain("fort", -1); hurt(rand(1, 3) + Math.floor((s.age - 60) / 8), "노쇠하여"); }
   if (s.ego && !s.ego.stable && s.alive) strain(rand(4, 10), "불안정한 E.G.O에 잠식되어");
   if (s.job?.type === "claw" && s.alive) strain(rand(3, 8), "발톱의 의무에");
-  if (s.taboo && s.alive && chance(0.35)) {
+  if (s.taboo && s.alive && chance(0.2)) {
     if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
     else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다", true);
   }
-  if (s.alive && !s.vampire && s.age >= 58 && chance((s.age - 55) * 0.016 + (s.zone === "back" ? 0.02 : 0))) {
+  if (s.alive && !s.vampire && s.age >= 70 && chance((s.age - 67) * 0.015 + (s.zone === "back" ? 0.01 : 0))) {
     achieve("oldage");
     die("노환으로 잠든 채 세상을 떠났다. 이 도시에서 드문 죽음이다", true);
   }
@@ -1951,6 +1983,7 @@ function renderSheet() {
 }
 
 const PHRASE = {
+  sleep: "잠을 잔다", babble: "옹알이를 한다", crawl: "바닥을 기어 다닌다", toy: "장난감을 가지고 논다",
   walk: "거리를 걷는다", diary: "일기를 쓴다", meditate: "조용히 명상한다", cook: "밥을 지어 먹는다", news: "신문을 펼친다",
   pub: "술집에 들른다", gamble: "도박장에 간다", volunteer: "무료 급식소를 돕는다", workshop: "공방을 구경한다",
   play: "골목에서 뛰어논다", study: "책을 펼친다", train: "몸을 단련한다", rest: "아무것도 하지 않고 쉰다",
@@ -1970,8 +2003,11 @@ const PHRASE = {
   bloodHunt: "혈귀를 사냥하러 나간다", serve: "저택을 지킨다", ruin: "유적 깊숙이 들어간다", feed: "피를 마신다", sellRelic: "유물을 경매에 내놓는다", moveNest: "둥지로 이주한다", moveBack: "뒷골목으로 이사한다",
 };
 const PHRASE_SPIDER = { play: "실 사이에 숨어 혼자 논다", study: "몰래 숨겨 둔 책을 읽는다", train: "홀로 검을 휘두른다", rest: "방구석에서 숨을 고른다" };
-const SPIDER_OK = ["play", "study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm"];
-const phrase = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
+const SPIDER_OK = ["sleep", "babble", "crawl", "toy", "play", "study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm"];
+// 놀이는 사는 곳에 따라 다르게 부른다
+const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린이집 마당에서 뛰어논다", hcorp: "기와집 마당에서 뛰어논다", out: "폐허 사이를 뛰어다닌다" };
+const phrase0 = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
+const phrase = a => (a.id === "play" && PLAY_PLACE[s.zone]) || phrase0(a);
 const SISYPHE_OK = ["study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe", "feed"];
 const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id)) && (s.zone !== "sisyphe" || SISYPHE_OK.includes(a.id));
 
