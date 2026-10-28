@@ -4,7 +4,7 @@ Project Moon 세계관(로보토미 코퍼레이션 · 라이브러리 오브 �
 
 ## 플레이
 
-**웹에서 바로 플레이:** https://jageobyong358-prog.github.io/-skskqo/ (GitHub Pages)
+**웹에서 바로 플레이:** https://claude.ai/artifact/PrX72WGLXfzLb6Dpe27KEW
 
 또는 `index.html`을 브라우저로 열면 바로 실행됩니다. 빌드나 설치는 필요 없습니다.
 
