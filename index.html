@@ -110,6 +110,11 @@ header.top { display: flex; align-items: baseline; justify-content: space-betwee
 .ap { font-family: var(--mono); font-size: 13px; color: var(--muted); }
 .ap b { color: var(--brass); }
 .groups { display: grid; gap: 14px; }
+.mang { margin-bottom: 14px; }
+.rings { display: flex; flex-wrap: wrap; gap: 6px; }
+.ring { display: grid; gap: 2px; padding: 6px 12px; color: var(--brass); letter-spacing: .1em; }
+.ring small { color: var(--muted); font-size: 11px; letter-spacing: 0; }
+.ring.on { border-color: var(--brass); background: #c9a14a1f; }
 .group-title { font-size: 12px; letter-spacing: .14em; color: var(--muted); margin-bottom: 6px; }
 .acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
 .act { display: grid; gap: 2px; padding: 10px 12px; }
@@ -207,10 +212,11 @@ const FINGERS = [
 const SYNDS = ["갈고리 조직", "녹슨 사슬단", "검은 비늘 회", "9번가 형제단", "쥐구멍 상회", "회색 우산파"];
 const COLOR_A = ["진홍", "청록", "회백", "금빛", "칠흑", "은회", "자홍", "적갈", "남빛", "잿빛"];
 const COLOR_B = ["칼날", "늑대", "서리", "파도", "종소리", "안개", "망치", "장미", "등불", "메아리"];
+const EGO_NAMES = ["꺼지지 않는 등불", "가시 돋친 서약", "잿빛 요람", "거꾸로 핀 꽃", "녹슨 맹세", "침묵하는 종", "부서진 나침반", "붉은 실타래", "깊은 우물", "새벽의 칼날"];
 const ACH = {
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", library: "도서관 생환", taboo: "금기를 건드림", night: "청소부를 베다",
-  oldage: "천수를 누림", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
+  oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
 };
 
 // ───────── 상태 ─────────
@@ -241,8 +247,15 @@ function newLife(name, gender) {
 }
 
 const apFor = st => (st.age < 6 ? 1 : st.age < 16 ? 2 : 3);
-const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3;
+// 신(心) 숙련도 20마다 망(望) 고리 하나, 최대 다섯
+const maxRings = st => Math.min(5, Math.floor((st.shin || 0) / 20));
+const rings = st => Math.min(st.rings || 0, maxRings(st));
+const mangLoad = n => (n ? 4 * Math.pow(2, n - 1) : 0);
+const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3 + (st.ego ? (st.ego.stable ? 25 : 35) : 0)
+  + (st.shin || 0) / 5 + rings(st) * 10;
 const rankOf = v => (v >= 100 ? "EX" : ["I", "II", "III", "IV", "V"][Math.min(4, Math.floor(v / 20))]);
+// 성별에 따른 문구: gx(남성, 여성)
+const gx = (m, f) => (s && s.gender === "f" ? f : m);
 const where = st => `${st.district}구 ${ZONES[st.zone]}`;
 
 function jobLabel(j) {
@@ -292,15 +305,40 @@ function hurt(n, cause) {
 function strain(n, cause) {
   if (!s.alive) return;
   s.sp = clamp(s.sp - n, 0, 100);
-  if (s.sp <= 0) {
-    if (chance(0.45)) {
-      die(cause ? `${cause} — 무너진 마음의 빈자리에서 다른 무언가가 태어났다. 왜곡되었다.` : "마음이 무너진 자리에서 다른 무언가가 태어났다. 왜곡되었다.");
-    } else {
-      s.sp = 15;
-      gain("prud", -4); gain("fort", -3);
-      say("정신이 바닥났지만 가까스로 자신을 붙잡았다. 무언가를 잃은 기분이다.", "bad");
-    }
+  if (s.sp <= 0) mindBreak(cause);
+}
+// 정신력이 바닥나면: 자신을 마주해 E.G.O가 피어나거나, 뒤틀리거나, 가까스로 버틴다
+function mindBreak(cause) {
+  const resolve = (s.temp + s.just) / 400;
+  const r = Math.random();
+  if (!s.ego && r < 0.1 + resolve * 0.4) return bloomEgo(true, "무너지는 마음 한가운데서");
+  if (!s.ego && r < 0.28 + resolve * 0.4) return bloomEgo(false, "무너지는 마음 한가운데서");
+  if (r < 0.7) {
+    die(cause ? `${cause} — 무너진 마음의 빈자리에서 다른 무언가가 태어났다. 뒤틀렸다.` : "마음이 무너진 자리에서 다른 무언가가 태어났다. 뒤틀렸다.");
+    return;
   }
+  s.sp = 15;
+  gain("prud", -4); gain("fort", -3);
+  say("정신이 바닥났지만 가까스로 자신을 붙잡았다. 무언가를 잃은 기분이다.", "bad");
+}
+function bloomEgo(stable, how) {
+  const name = pick(EGO_NAMES);
+  s.ego = { name, stable };
+  s.sp = stable ? 70 : 40;
+  if (stable) { VIRTUES.forEach(([k]) => gain(k, 8)); achieve("ego"); }
+  else { gain("fort", 12); gain("just", 12); achieve("egoUnstable"); }
+  say(stable
+    ? `${how} 자신을 똑바로 마주했다. 마음이 꽃처럼 열리며 E.G.O 「${name}」이(가) 개화했다.`
+    : `${how} 마음이 반쯤만 열렸다. 균열 사이로 불안정한 E.G.O 「${name}」이(가) 피어났다. 언제 다시 뒤틀릴지 모른다.`, "good");
+}
+// 망을 감은 채 싸우면 고리 수에 따라 부하가 배로 커진다
+function useMang() {
+  const n = rings(s);
+  if (!n) return;
+  const load = mangLoad(n);
+  strain(load, `${n}겹의 망을 감당하지 못하고`);
+  hurt(Math.round(load / 2), `${n}겹의 망의 부하로 몸이 버티지 못해`);
+  if (s.alive) say(`망 ${n}겹을 감았다. 정신력 -${load}, 체력 -${Math.round(load / 2)}`, "bad");
 }
 function die(cause) {
   s.alive = false;
@@ -343,6 +381,30 @@ const ACTIONS = [
   { id: "retire", g: "일", label: "은퇴", desc: "모은 돈으로 여생을", cond: () => !!s.job && s.age >= 50,
     run() { const old = jobLabel(s.job); setJob(null); s.retired = true; heal(10, 20); return `${old} 생활을 접었다. 손이 아직 기억하고 있다.`; } },
 
+  { id: "shinLearn", g: "생활", label: "신(心) 깨우치기", desc: "자신의 죄를 돌아본다 · 신중·자제", cond: () => !s.shin && s.age >= 14, run: () => reflectSin(0) },
+  { id: "shinTrain", g: "생활", label: "신(心) 수련", desc: "숙련도 ↑ · 20마다 망 고리 +1 · 정신 소모", cond: () => s.shin > 0,
+    block: () => s.shin >= 100 && "이미 극에 달했다",
+    run() {
+      const before = maxRings(s);
+      s.shin = clamp(s.shin + rand(4, 8) + (s.ego ? 2 : 0), 0, 100);
+      strain(rand(6, 12), "신을 무리하게 끌어올리다");
+      if (!s.alive) return "";
+      const now = maxRings(s);
+      if (now > before) {
+        if (now === 1) achieve("mang");
+        if (now === 5) achieve("mang5");
+        return now === 1 ? "모은 마음을 한 점으로 응축했다. 손끝에 처음으로 빛의 고리, 망(望)이 맺혔다."
+          : `망을 ${now}겹까지 펼칠 수 있게 되었다. 고리가 늘수록 몸이 비명을 지른다.`;
+      }
+      return `감정을 고르고 모으는 법을 되풀이했다. 신 숙련도 ${s.shin}.`;
+    } },
+  { id: "egoCalm", g: "생활", label: "E.G.O 다스리기", desc: "불안정한 E.G.O를 안정시킨다 · 정신 소모", cond: () => s.ego && !s.ego.stable,
+    run() {
+      if (chance(0.15 + (s.temp + s.prud) / 400)) { s.ego.stable = true; achieve("ego"); heal(0, 30); return `「${s.ego.name}」의 균열이 메워졌다. 이제 이 E.G.O는 온전히 나의 것이다.`; }
+      strain(rand(8, 16), "불안정한 E.G.O를 다스리다");
+      return s.alive ? "마음속 균열을 들여다봤다. 아직은 손이 닿지 않는다." : "";
+    } },
+
   // 생활
   { id: "augment", g: "생활", label: "의체 시술", desc: "돈으로 몸을 바꾼다", cond: () => s.age >= 16, block: () => s.money < 3000 && "최소 3,000안 필요", run: augment },
   { id: "ampule", g: "생활", label: "K사 앰플", desc: "1,500안 · 체력 완전 회복 · 행동력 소모 없음", ap: 0, cond: () => s.age >= 10, block: () => (s.money < 1500 && "1,500안 필요") || (s.hp >= 100 && "이미 멀쩡하다"),
@@ -352,6 +414,26 @@ const ACTIONS = [
   { id: "moveBack", g: "생활", label: "뒷골목으로 이사", desc: "생활비 절약", cond: () => s.zone === "nest" && s.age >= 18,
     run() { s.zone = "back"; return "둥지를 떠났다. 골목의 공기는 녹 냄새가 난다."; } },
 ];
+
+// 신(心)은 요령만 알면 누구나 배울 수 있지만, 자신의 죄를 돌아봐야 제대로 터득된다
+function reflectSin(bonus) {
+  return {
+    title: "죄를 돌아보다",
+    text: "신(心)은 감정과 마음을 요령껏 모아 몸을 끌어올리는 기술이다. 요령은 누구나 배울 수 있다.\n하지만 제대로 터득하려면 먼저 자신이 지은 죄를 똑바로 돌아봐야 한다고들 한다.",
+    choices: [
+      { label: "지난 죄를 하나하나 떠올린다", sub: "신중·자제 · 실패하면 정신 피해", run() {
+        const p = clamp(0.15 + bonus + (s.prud + s.temp) / 250 + (s.rep < 0 ? 0.1 : 0), 0.1, 0.9);
+        if (chance(p)) {
+          s.shin = 10; achieve("shin");
+          return `${s.rep < 0 ? "골목에서 저지른 일들" : "외면해 온 작은 잘못들"}을 끝까지 마주했다. 가슴속에서 무언가가 단단하게 모였다. 신(心)을 터득했다.`;
+        }
+        strain(rand(10, 22), "자신의 죄에 짓눌려");
+        return s.alive ? "떠올린 죄의 무게를 감당하지 못했다. 아직 마음이 흩어져 있다." : "";
+      } },
+      { label: "아직은 마주할 수 없다", run: () => "눈을 감고 생각을 멈췄다." },
+    ],
+  };
+}
 
 function social() {
   if (!s.partner) {
@@ -365,12 +447,12 @@ function social() {
   }
   if (!s.married) {
     s.love++;
-    if (s.love >= 3 && chance(0.6)) { s.married = true; achieve("family"); heal(0, 20); return `${s.partner}와(과) 결혼했다. 작은 식이었지만 충분했다.`; }
+    if (s.love >= 3 && chance(0.6)) { s.married = true; achieve("family"); heal(0, 20); return `${s.partner}와(과) 결혼했다. ${gx("신랑", "신부")}의 옷은 빌린 것이었지만 충분했다.`; }
     heal(0, 10);
     return `${s.partner}와(과) 시간을 보냈다.`;
   }
   heal(0, 12);
-  if (s.age < 50 && s.kids < 4 && chance(0.35)) { s.kids++; return `아이가 태어났다. ${s.kids}번째 아이다. 이 아이는 둥지에서 키우고 싶다.`; }
+  if (s.age < 50 && s.kids < 4 && chance(0.35)) { s.kids++; return `${s.kids === 1 ? gx("아버지가", "어머니가") + " 되었다." : `${s.kids}번째 아이가 태어났다.`} 이 아이는 둥지에서 키우고 싶다.`; }
   return `${s.partner}와(과) 조용한 저녁을 보냈다.`;
 }
 
@@ -413,6 +495,8 @@ function joinFinger() {
 }
 
 function commission(big) {
+  useMang();
+  if (!s.alive) return "";
   const j = s.job;
   const tier = j.color ? 11 : 10 - j.grade;
   const diff = tier * 10 + 12 + (big ? 22 : 0);
@@ -486,6 +570,8 @@ function racket() {
   return `구역을 돌며 ${fmt(m)}안을 거뒀다.`;
 }
 function fingerOp() {
+  useMang();
+  if (!s.alive) return "";
   const j = s.job;
   const p = clamp(0.5 + (power(s) - 40 - j.rank * 10) / 50, 0.1, 0.92);
   const m = rand(3000, 7000) * (j.rank + 1);
@@ -530,7 +616,7 @@ function augment() {
 const EVENTS = [
   { id: "night", w: () => (s.zone === "back" && s.age >= 7 ? 5 : 0), run: () => ({
     title: "뒷골목의 밤",
-    text: `${s.age < 15 ? "심부름을 갔다 오는 길이 늦어졌다." : "일이 늦게 끝났다."} 시계가 새벽 3시 10분을 향해 간다.\n이 시간, 거리에 남은 것은 무엇이든 청소부의 몫이 된다. 멀리서 무언가 끌리는 소리가 들린다.`,
+    text: `${s.age < 15 ? `${gx("어머니", "아버지")} 심부름을 갔다 오는 길이 늦어졌다.` : "일이 늦게 끝났다."} 시계가 새벽 3시 10분을 향해 간다.\n이 시간, 거리에 남은 것은 무엇이든 청소부의 몫이 된다. 멀리서 무언가 끌리는 소리가 들린다.`,
     choices: [
       { label: "가장 가까운 문을 두드린다", sub: "자제", run() {
         if (chance(0.5 + s.temp / 200)) { gain("temp", 2); return "누군가 말없이 문을 열어 주었다. 3시 20분이 지날 때까지 숨을 죽였다."; }
@@ -541,6 +627,7 @@ const EVENTS = [
         hurt(rand(40, 85), "뒷골목의 밤, 청소부에게 따라잡혀");
         return s.alive ? "등 뒤에서 무언가가 스쳤다. 살아서 집에 닿은 게 기적이다." : ""; } },
       { label: "맞서 싸운다", sub: "전투력 40 이상", cond: () => power(s) >= 40, run() {
+        useMang(); if (!s.alive) return "";
         if (chance(clamp(0.25 + (power(s) - 40) / 60, 0.1, 0.9))) { s.rep += 10; gain("just", 3); achieve("night"); return "청소부 하나를 베어 넘겼다. 나머지는 물러갔다. 소문이 돌 것이다."; }
         hurt(rand(55, 95), "청소부와 맞서 싸우다");
         return s.alive ? "칼날이 무뎌질 때까지 싸웠다. 이길 수 있는 상대가 아니었다." : ""; } },
@@ -548,10 +635,11 @@ const EVENTS = [
 
   { id: "rats", w: () => (s.zone !== "nest" && s.age >= 10 && s.age <= 40 ? 3 : 0), run: () => ({
     title: "쥐 떼",
-    text: "골목 어귀에서 쥐들이 길을 막았다. 뒷골목 밑바닥에서 남의 것을 뜯어 사는 무리다.\n\"가진 거 다 내놔.\"",
+    text: `골목 어귀에서 쥐들이 길을 막았다. 뒷골목 밑바닥에서 남의 것을 뜯어 사는 무리다.\n"${gx("어이 형씨", "어이 아가씨")}, 가진 거 다 내놔."`,
     choices: [
       { label: `돈을 내준다 (${fmt(Math.max(0, Math.floor(s.money * 0.3)))}안)`, run() { const m = Math.max(0, Math.floor(s.money * 0.3)); s.money -= m; strain(5); return "가진 것을 털렸다. 그래도 목숨은 붙어 있다."; } },
       { label: "싸운다", sub: "전투력", run() {
+        useMang(); if (!s.alive) return "";
         if (chance(clamp(0.3 + (power(s) - 15) / 50, 0.1, 0.95))) { gain("fort", 3); s.money += rand(50, 400); return "쥐들을 쫓아냈다. 놈들이 흘린 돈도 챙겼다."; }
         hurt(rand(20, 45), "쥐 떼에게 둘러싸여");
         return s.alive ? "흠씬 두들겨 맞고 주머니까지 털렸다." : ""; } },
@@ -559,7 +647,7 @@ const EVENTS = [
 
   { id: "fingerTax", w: () => (s.zone === "back" && s.age >= 20 && s.money > 2000 && s.job?.type !== "finger" ? 2 : 0), run: () => ({
     title: "손가락의 상납",
-    text: "이 구역을 쥔 손가락의 단원이 찾아왔다. 정중한 말투였지만 눈은 웃고 있지 않았다.\n\"올해 몫을 받으러 왔습니다.\"",
+    text: `이 구역을 쥔 손가락의 단원이 찾아왔다. 정중한 말투였지만 눈은 웃고 있지 않았다.\n"${gx("선생님", "아가씨")}, 올해 몫을 받으러 왔습니다."`,
     choices: [
       { label: `낸다 (${fmt(Math.floor(s.money * 0.2))}안)`, run() { s.money -= Math.floor(s.money * 0.2); return "돈을 건넸다. 그는 고개를 까딱하고 사라졌다."; } },
       { label: "거절한다", sub: "정의 · 큰 위험", run() {
@@ -582,6 +670,7 @@ const EVENTS = [
     text: "문틈으로 초대장 한 장이 들어왔다. 어젯밤까지 없던 거대한 건물이 거리 한복판에 서 있다고 한다.\n'원하는 책을 얻을 기회를 드립니다. 대가는, 당신이 질 경우의 당신입니다.'",
     choices: [
       { label: "초대에 응한다", sub: "전투력 · 생사", run() {
+        useMang(); if (!s.alive) return "";
         if (chance(clamp(0.2 + (power(s) - 40) / 70, 0.05, 0.85))) {
           const m = rand(20000, 60000); s.money += m; gain(pick(VIRTUES)[0], 10); achieve("library");
           return `접대를 이겨냈다. 손에 쥔 책 한 권에서 누군가의 일생이 흘러들어 왔다. 그것을 팔아 ${fmt(m)}안을 얻었다.`;
@@ -601,7 +690,7 @@ const EVENTS = [
 
   { id: "scout", w: () => (!s.job && s.age >= 18 && power(s) >= 35 ? 2 : 0), run: () => ({
     title: "사무소의 제안",
-    text: "작은 해결사 사무소의 소장이 찾아왔다. 당신이 골목에서 싸우는 걸 봤다고 한다.\n\"면허 비용은 우리가 대지. 같이 일해 볼 생각 있나?\"",
+    text: `작은 해결사 사무소의 소장이 찾아왔다. 당신이 골목에서 싸우는 걸 봤다고 한다.\n"${gx("이봐 젊은이", "이봐 아가씨")}, 면허 비용은 우리가 대지. 같이 일해 볼 생각 있나?"`,
     choices: [
       { label: "받아들인다", run() { setJob({ type: "fixer", grade: 9, exp: 0, color: null }); achieve("fixer"); return "사무소에 들어갔다. 소장은 커피를 지독하게 못 탄다."; } },
       { label: "거절한다", run: () => "정중히 거절했다." },
@@ -615,9 +704,50 @@ const EVENTS = [
   } },
 
   { id: "distortion", w: () => (s.age >= 25 ? 0.8 : 0), run() {
-    if (s.sp < 30 && chance(0.5)) { die("왜곡 현상에 삼켜져 사람이 아닌 무언가가 되었다"); return { title: "왜곡", text: "" }; }
-    strain(rand(12, 25), "왜곡체를 목격하고");
-    return { title: "왜곡 현상", text: s.alive ? "거리 한복판에서 사람이 괴물로 변하는 것을 보았다. 그 사람은 마지막까지 누군가의 이름을 부르고 있었다." : "" };
+    if (s.sp < 30 && chance(0.5)) { die("뒤틀림에 삼켜져 사람이 아닌 무언가가 되었다"); return { title: "뒤틀림", text: "" }; }
+    strain(rand(12, 25), "뒤틀린 자를 목격하고");
+    return { title: "뒤틀림 현상", text: s.alive ? (s.ego ? `거리 한복판에서 사람이 뒤틀렸다. 「${s.ego.name}」을(를) 꺼내 들고 맞섰고, 그것이 마지막까지 부르던 이름을 들었다.` : "거리 한복판에서 사람이 괴물로 뒤틀리는 것을 보았다. 그 사람은 마지막까지 누군가의 이름을 부르고 있었다.") : "" };
+  } },
+
+  { id: "self", w: () => (!s.ego && s.age >= 16 && s.sp < 45 ? 2.5 : 0), run: () => ({
+    title: "자신과의 대면",
+    text: `잠들기 직전, 거울 속 ${gx("남자", "여자")}가 먼저 입을 열었다.\n"언제까지 외면할 거야? 네가 정말 원하는 게 뭔지 말해 봐."`,
+    choices: [
+      { label: "마음을 마주한다", sub: "자제·정의 · E.G.O 개화 또는 큰 정신 피해", run() {
+        const p = clamp(0.15 + (s.temp + s.just) / 300, 0.1, 0.6);
+        const r = Math.random();
+        if (r < p) { bloomEgo(true, "거울 앞에서"); return "거울 속의 자신과 화해했다."; }
+        if (r < p + 0.25) { bloomEgo(false, "거울 앞에서"); return "거울에 금이 갔다. 그 금은 마음에도 남았다."; }
+        strain(rand(25, 45), "자신을 마주하다 견디지 못하고");
+        return s.alive ? "대답하지 못했다. 거울 속 얼굴이 비웃었다." : "";
+      } },
+      { label: "눈을 돌린다", run() { heal(0, 5); return "거울을 천으로 덮었다. 오늘은 아니다."; } },
+    ] }) },
+
+  { id: "egoRampage", w: () => (s.ego && !s.ego.stable ? 3 : 0), run: () => ({
+    title: "불안정 E.G.O 폭주",
+    text: `「${s.ego.name}」이(가) 몸 밖으로 넘쳐흐르려 한다. 피부 아래에서 무언가가 꽃잎처럼 벌어진다.\n지금 놓아 버리면 강해질 것이다. 다시는 돌아오지 못할 수도 있다.`,
+    choices: [
+      { label: "억누른다", sub: "자제", run() {
+        if (chance(0.35 + s.temp / 200)) {
+          if (chance(0.4)) { s.ego.stable = true; achieve("ego"); return `억누르는 사이 무언가가 맞물렸다. 「${s.ego.name}」이(가) 안정되었다.`; }
+          gain("temp", 3); return "이를 악물고 버텼다. 꽃잎이 다시 접혔다.";
+        }
+        strain(rand(25, 40), "폭주하는 E.G.O를 억누르다");
+        return s.alive ? "억누르는 데 실패했다. 며칠 동안 자신이 누구인지 기억나지 않았다." : "";
+      } },
+      { label: "몸을 맡긴다", sub: "큰 힘 · 큰 위험", run() {
+        if (chance(0.35)) { die(`불안정한 E.G.O 「${s.ego.name}」에 잠식되어 뒤틀렸다`); return ""; }
+        s.rep += 12; gain("fort", 6); gain("just", 6); strain(rand(15, 25), "E.G.O에 몸을 맡기고");
+        return s.alive ? "골목 하나가 쑥대밭이 됐다. 정신을 차렸을 때 사람들이 멀찍이서 나를 보고 있었다." : "";
+      } },
+    ] }) },
+
+  { id: "shinMaster", w: () => (!s.shin && s.age >= 16 ? 0.8 : 0), run() {
+    const r = reflectSin(0.2);
+    r.title = "신(心)을 가르치는 사람";
+    r.text = `낡은 도장의 ${gx("노인", "노파")}이 말을 걸었다. "주먹은 몸이 아니라 마음으로 내지르는 거다. 배우고 싶나?"\n${r.text}`;
+    return r;
   } },
 
   { id: "luck", w: () => (s.age >= 8 ? 1.5 : 0), run() { const m = rand(200, 3000); s.money += m; return { title: "횡재", text: `하수구 철망 사이에서 주인 없는 돈뭉치를 주웠다. ${fmt(m)}안.` }; } },
@@ -663,9 +793,9 @@ function milestones() {
   if (s.age === 13 && s.zone !== "nest") m("일을 배우다", "또래들이 하나둘 일을 시작했다. 누군가는 공방으로, 누군가는 조직으로.");
   if (s.age === 18) {
     const gift = s.zone === "nest" ? rand(8000, 20000) : rand(0, 600);
-    m("성인", `성인이 되었다. 가족이 ${gift ? fmt(gift) + "안을 쥐여 주었다." : "줄 수 있는 건 없었다. 괜찮다."}`, () => { s.money += gift; });
+    m("성인", `${gx("청년", "숙녀")}가 되었다. 가족이 ${gift ? fmt(gift) + "안을 쥐여 주었다." : "줄 수 있는 건 없었다. 괜찮다."}`, () => { s.money += gift; });
   }
-  if (s.age === 40) m("마흔", "거울 속에 부모님의 얼굴이 보이기 시작했다.");
+  if (s.age === 40) m("마흔", `거울 속에 ${gx("아버지", "어머니")}의 얼굴이 보이기 시작했다.`);
   return out;
 }
 
@@ -691,6 +821,7 @@ function passive() {
   // 자연 회복과 노화
   heal(s.age < 40 ? 12 : 6, 8);
   if (s.age >= 45) { gain("fort", -1); hurt(rand(1, 4) + Math.floor((s.age - 45) / 6), "노쇠하여"); }
+  if (s.ego && !s.ego.stable && s.alive) strain(rand(4, 10), "불안정한 E.G.O에 잠식되어");
   if (s.taboo && s.alive && chance(0.35)) {
     if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
     else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다");
@@ -815,9 +946,10 @@ function renderSheet() {
       <dt>명성</dt><dd>${s.rep}</dd>
       <dt>전투력</dt><dd>${Math.round(power(s))}</dd>
       <dt>의체</dt><dd>${s.aug}</dd>
+      ${s.shin ? `<dt>신(心)</dt><dd>${s.shin} · 망 최대 ${maxRings(s)}겹</dd>` : ""}
       <dt>가족</dt><dd>${esc(fam)}</dd>
     </dl>
-    ${s.ach.length || s.taboo ? `<div class="chips">${s.taboo ? `<span class="chip warn">발톱의 주시</span>` : ""}${s.ach.map(a => `<span class="chip">${ACH[a]}</span>`).join("")}</div>` : ""}
+    ${s.ach.length || s.taboo || s.ego ? `<div class="chips">${s.ego ? `<span class="chip${s.ego.stable ? "" : " warn"}">E.G.O 「${esc(s.ego.name)}」${s.ego.stable ? "" : " · 불안정"}</span>` : ""}${s.taboo ? `<span class="chip warn">발톱의 주시</span>` : ""}${s.ach.map(a => `<span class="chip">${ACH[a]}</span>`).join("")}</div>` : ""}
   </aside>`;
 }
 
@@ -831,6 +963,12 @@ function renderActions() {
       return `<button class="btn act" id="act-${a.id}" data-id="${a.id}" ${blocked ? "disabled" : ""}><b>${a.label}</b><small>${esc(blocked || a.desc)}</small></button>`;
     }).join("")}</div></div>`;
   }).join("");
+}
+
+function renderMang() {
+  const opts = [];
+  for (let n = 0; n <= maxRings(s); n++) opts.push(`<button class="btn ring${rings(s) === n ? " on" : ""}" id="ring-${n}" data-n="${n}" aria-pressed="${rings(s) === n}">${n ? "◯".repeat(n) : "없음"}<small>${n ? `위력 +${n * 10} · 부하 ${mangLoad(n)}` : "부하 없음"}</small></button>`);
+  return `<div class="mang"><div class="group-title">망(望) — 전투에 감을 고리</div><div class="rings">${opts.join("")}</div></div>`;
 }
 
 function renderLog() {
@@ -852,6 +990,7 @@ function render() {
       <div class="main">
         <section class="panel card">
           <div class="panel-head"><h3>올해 무엇을 할까</h3><span class="ap">행동력 <b>${s.ap}</b> / ${apFor(s)}</span></div>
+          ${maxRings(s) ? renderMang() : ""}
           <div class="groups">${renderActions()}</div>
           <button class="btn primary advance" id="advance">한 해를 보낸다 → ${s.age + 1}세</button>
         </section>
@@ -863,6 +1002,7 @@ function render() {
     </div>`;
   $("#screen").querySelectorAll(".act").forEach(b => b.addEventListener("click", () => doAction(ACTIONS.find(a => a.id === b.dataset.id))));
   $("#advance").addEventListener("click", advanceYear);
+  $("#screen").querySelectorAll(".ring").forEach(b => b.addEventListener("click", () => { s.rings = +b.dataset.n; save(); render(); }));
 }
 
 function confirmRestart() {
@@ -916,7 +1056,7 @@ function renderIntro() {
 }
 
 function renderEnding() {
-  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
+  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
   $("#screen").innerHTML = `
     <div class="game">
       ${renderSheet()}
