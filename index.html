@@ -325,7 +325,7 @@ const COLOR_A = ["진홍", "청록", "회백", "금빛", "칠흑", "은회", "�
 const COLOR_B = ["칼날", "늑대", "서리", "파도", "종소리", "안개", "망치", "장미", "등불", "메아리"];
 const EGO_NAMES = ["꺼지지 않는 등불", "가시 돋친 서약", "잿빛 요람", "거꾸로 핀 꽃", "녹슨 맹세", "침묵하는 종", "부서진 나침반", "붉은 실타래", "깊은 우물", "새벽의 칼날"];
 const ACH = {
-  heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
+  heir: "H사 가주 후보", head: "H사 가주", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
   leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
@@ -393,7 +393,7 @@ function jobLabel(j) {
     case "finger": return `${j.name} ${["견습", "정식 단원", "중견", "간부"][j.rank]}`;
     case "worker": return "공장 노동자";
     case "heishou": return `흑수 - ${j.branch} ${["말단", "행동대원", "부두목", "두목"][j.rank]}`;
-    case "hhead": return `${j.family} 가주`;
+    case "hhead": return "H사 가주";
     case "hlord": return "H사 군주";
     case "sailor": return j.rank === 3 ? `「${j.ship}」호 선장` : `대호수 ${["갑판원", "항해사", "일등항해사"][j.rank]}`;
     case "pirate": return j.rank === 3 ? `해적선 「${j.ship}」의 선장` : `해적 ${["졸개", "갑판장", "부선장"][j.rank]}`;
@@ -676,7 +676,7 @@ const ACTIONS = [
   { id: "racket", g: "일", label: "구역 수금", desc: "돈 ↑ · 평판 ↓", cond: () => s.job?.type === "synd", run: racket },
   { id: "fingerOp", g: "일", label: "지령 수행", desc: "큰 보상, 실패는 용서받지 못한다", cond: () => s.job?.type === "finger", run: fingerOp },
   { id: "heishouWork", g: "일", label: "흑수의 일", desc: "다른 지파와의 다툼 · 전투", cond: () => s.job?.type === "heishou", run: heishouWork },
-  { id: "heirDuel", g: "일", label: "후계 결투", desc: "경쟁 후보와 결투 · 3승하면 가주", cond: () => s.heir && !s.heir.head, run: heirDuel },
+  { id: "heirDuel", g: "일", label: "후계 결투", desc: "다른 가문의 후보와 결투 · 3승하면 H사 가주", cond: () => s.heir && !s.heir.head, run: heirDuel },
   { id: "heirPolitics", g: "일", label: "원로 포섭", desc: "신중·자제로 세를 모은다", cond: () => s.heir && !s.heir.head, run: heirPolitics },
   { id: "lordChallenge", g: "일", label: "군주에 도전", desc: "목숨을 건 싸움 · 상대 위력 120 · 망 3겹", cond: () => s.job?.type === "hhead", block: () => s.rep < 50 && "명성 50 필요", run: lordChallenge },
   { id: "voyage", g: "일", label: "항해", desc: "돈 · 실적 · 호수의 괴물", cond: () => s.job?.type === "sailor", run: voyage },
@@ -923,12 +923,13 @@ function becomeHead() {
   s.heir.head = true;
   setJob({ type: "hhead", family: s.hFamily });
   achieve("head"); s.rep += 20;
-  return `경쟁자들이 모두 물러났다. ${s.hFamily}의 가주가 되었다.`;
+  return `세 가문의 후보들이 모두 물러났다. ${s.hFamily} 출신으로 H사의 가주가 되었다.`;
 }
 function heirDuel() {
   const rival = pick(NAMES.filter(n => n !== s.name));
+  const house = pick(H_FAMILIES.filter(f => f !== s.hFamily));
   return {
-    combat: { name: `경쟁 후보 ${rival}`, desc: `${s.hFamily}의 피를 나눈 형제. 가주의 자리는 하나뿐이다.`, str: 45 + s.heir.wins * 18, yieldAt: 15, cause: `후계 다툼에서 ${rival}에게` },
+    combat: { name: `${house}의 후보 ${rival}`, desc: `H사 가주의 자리를 노리는 ${house}의 후보. H사의 가주는 단 한 사람이다.`, str: 45 + s.heir.wins * 18, yieldAt: 15, cause: `후계 다툼에서 ${rival}에게` },
     win() { s.heir.wins++; s.rep += 5; return s.heir.wins >= 3 ? becomeHead() : `${rival}을(를) 꺾었다. 후계 다툼 ${s.heir.wins}승.`; },
     lose() { s.rep -= 3; strain(rand(8, 15)); return s.alive ? `${rival}에게 졌다. 원로들이 고개를 저었다.` : ""; },
   };
@@ -1573,7 +1574,7 @@ function milestones() {
   if (s.zone === "spider") return spiderMilestones(out, m);
   if (s.age === 1) m("첫걸음", nestLike(s) ? "깨끗한 바닥 위에서 첫걸음을 뗐다." : "녹슨 철판 위에서 첫걸음을 뗐다.");
   if (s.zone === "hcorp" && s.age === 6) m("서당", "H사 구역의 서당에 들어갔다. 예법과 글씨, 그리고 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
-  if (s.hFamily && s.age === 16) m("가주 후보", `${s.hFamily}의 원로회가 당신을 가주 후보로 지명했다. 형제들의 눈빛이 그날부터 달라졌다.`, () => { s.heir = { wins: 0 }; achieve("heir"); });
+  if (s.hFamily && s.age === 16) m("가주 후보", `${s.hFamily}의 원로회가 당신을 H사 가주 후보로 내세웠다. 다른 두 가문도 저마다 후보를 세웠다. 그날부터 모두의 눈빛이 달라졌다.`, () => { s.heir = { wins: 0 }; achieve("heir"); });
   if (s.age === 6 && s.zone !== "hcorp") {
     if (s.zone === "wing") m("사내 학교", `${s.wingCo} 직원 자녀들이 다니는 학교에 들어갔다. 교과서 표지에도 날개 로고가 박혀 있다.`, () => gain("prud", 6));
     else if (s.zone === "nest") m("입학", "둥지의 학교에 들어갔다. 날개 입사를 목표로 하는 아이들 사이에서.", () => gain("prud", 4));
@@ -2138,7 +2139,7 @@ function renderIntro() {
     const kid = gx("아들", "딸");
     const birth = {
       nest: `${where(s)}에서 ${kid}로 태어났다. 날개의 보호 아래, 비교적 운이 좋은 출발이다.`,
-      hcorp: s.hFamily ? `H사 ${s.hFamily}에서 ${kid}로 태어났다. 수많은 형제 가운데 하나. 가주의 자리는 하나뿐이다.` : `${where(s)}의 평범한 집에서 ${kid}로 태어났다. 기와지붕 위로 날개의 깃발이 펄럭인다.`,
+      hcorp: s.hFamily ? `H사 ${s.hFamily}에서 ${kid}로 태어났다. H사의 가주가 될 수 있는 세 가문 가운데 하나다.` : `${where(s)}의 평범한 집에서 ${kid}로 태어났다. 기와지붕 위로 날개의 깃발이 펄럭인다.`,
       wing: `${s.wingCo} 직원 가정의 ${kid}로 태어났다. ${WINGS.find(w => w.co === s.wingCo)?.flavor ?? ""} 출입증이 있는 아기다.`,
       back: `${where(s)}에서 ${kid}로 태어났다. 뒷골목의 낡은 방 한 칸. 흔한 시작이다.`,
       out: `${where(s)}에서 ${kid}로 태어났다. 도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다.`,
