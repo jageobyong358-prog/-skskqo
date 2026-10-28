@@ -245,6 +245,8 @@ const RELICS = [
   { name: "녹슨 왕관", pow: 5, rep: 20, curse: "hp", desc: "이마를 조금씩 파고든다." },
   { name: "꺼지지 않는 심장", pow: 12, curse: "sp", desc: "주머니 속에서 아직도 뛰고 있다." },
 ];
+// 마지막 글자에 받침이 있는지 (조사 고르기용)
+const hasBatchim = w => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
 const relicOf = n => RELICS.find(r => r.name === n);
 const SCENES = {
   back: ["골목에 녹슨 비가 내린다.", "멀리서 해결사들의 총성이 들린다.", "옆방 사람이 또 바뀌었다.", "골목 끝 공방에서 용접 불꽃이 튄다."],
@@ -1874,7 +1876,7 @@ function renderIntro() {
 }
 
 function renderEnding() {
-  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.vampire ? `${BLOOD_RANKS[s.vampire.rank]}으로 ${s.age}년을 살았다. 그동안 마신 피는 기억하지 않는다.` : (s.relics || []).length >= 3 ? "유물들은 주인을 잃고 다시 누군가의 손을 기다린다." : s.zone === "sisyphe" ? "시지프 백화점의 계단을 끝내 다 오르지 못했다." : s.ach.includes("sisypheOut") ? "백화점의 옥상에서 다시 도시로 걸어 나온 사람이었다." : s.araya === "lost" ? "끝내 알아보지 못한 붉은 리본이 있었다." : s.ach.includes("lord") ? "H사의 모든 가문이 그 이름 앞에 고개를 숙였다." : s.ach.includes("claw") ? "머리의 발톱으로 살았다. 그 이름은 어떤 기록에도 남지 않는다." : s.araya === "with" ? `아라야는 끝까지 ${gx("아버지", "어머니")}의 손을 놓지 않았다.` : s.araya === "vault" ? "금고 속의 약속은 끝내 지켜지지 않았다." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
+  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.vampire ? `${BLOOD_RANKS[s.vampire.rank]}${hasBatchim(BLOOD_RANKS[s.vampire.rank]) ? "으로" : "로"} ${s.age}년을 살았다. 그동안 마신 피는 기억하지 않는다.` : (s.relics || []).length >= 3 ? "유물들은 주인을 잃고 다시 누군가의 손을 기다린다." : s.zone === "sisyphe" ? "시지프 백화점의 계단을 끝내 다 오르지 못했다." : s.ach.includes("sisypheOut") ? "백화점의 옥상에서 다시 도시로 걸어 나온 사람이었다." : s.araya === "lost" ? "끝내 알아보지 못한 붉은 리본이 있었다." : s.ach.includes("lord") ? "H사의 모든 가문이 그 이름 앞에 고개를 숙였다." : s.ach.includes("claw") ? "머리의 발톱으로 살았다. 그 이름은 어떤 기록에도 남지 않는다." : s.araya === "with" ? `아라야는 끝까지 ${gx("아버지", "어머니")}의 손을 놓지 않았다.` : s.araya === "vault" ? "금고 속의 약속은 끝내 지켜지지 않았다." : s.ach.includes("mang5") ? "다섯 겹의 빛의 고리를 두른 사람이 있었다고, 골목은 오래 이야기했다." : s.ego?.stable ? `${gx("그", "그녀")}의 마음은 끝내 「${s.ego.name}」(으)로 피어났다.` : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
   $("#screen").innerHTML = `
     <div class="game">
       ${renderSheet()}
