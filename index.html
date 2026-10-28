@@ -217,8 +217,9 @@ const FLOOR_FOES = ["푸드코트 점원", "잡화관 매니저", "의류관 마
 const isN = () => (s.job?.type === "wing" && s.job.co === "N사") || (s.zone === "wing" && s.wingCo === "N사");
 // H사는 날개 가운데 하나다. 다만 세 가문과 흑수가 있어 구역의 모습은 다른 날개와 다르다.
 const isH = st => st.zone === "hcorp" || (st.zone === "wing" && st.wingCo === "H사");
-const zkey = st => (isH(st) ? "hcorp" : st.zone);
-const nestLike = st => (st.zone === "nest" || st.zone === "wing") && !isH(st);
+const isS = st => st.zone === "wing" && st.wingCo === "S사";
+const zkey = st => (isH(st) ? "hcorp" : isS(st) ? "scorp" : st.zone);
+const nestLike = st => (st.zone === "nest" || st.zone === "wing") && !isH(st) && !isS(st);
 const streetLike = st => st.zone === "back" || st.zone === "out";
 // 거미집의 아비들. 시오미 요루(소지)는 탈출 전까지 거미집에 남아 있다.
 const ABI = {
@@ -306,7 +307,8 @@ const SCENES = {
   out: ["외곽의 바람이 모래를 실어 온다.", "폐허 너머에서 정체 모를 울음소리가 들린다.", "오늘도 물을 구하는 게 일이다."],
   nest: ["둥지의 거리는 오늘도 깨끗하다.", "광고판이 새 앰플을 자랑한다.", "검문소 앞 줄이 길다."],
   wing: ["날개의 로고가 새겨진 창 너머로 도시가 내려다보인다.", "사내 방송이 오늘의 생산 목표를 읽는다.", "보안 요원이 신분증을 다시 확인한다."],
-  hcorp: ["기와지붕 너머로 H사의 깃발이 나부낀다.", "가문의 행렬이 지나가자 사람들이 고개를 숙인다.", "재갈을 쥔 주인 뒤로 흑수들이 말없이 따라 걷는다."],
+  hcorp: ["처마 끝마다 붉은 등롱이 흔들린다.", "가문의 행렬이 지나가자 사람들이 고개를 숙인다.", "재갈을 쥔 주인 뒤로 흑수들이 말없이 따라 걷는다.", "찻집에서 보이차 향이 흘러나온다."],
+  scorp: ["처마 끝에 풍경이 운다.", "장터에서 엿장수의 가위 소리가 들린다.", "갓을 쓴 사람들이 돌담길을 천천히 지나간다."],
   sisyphe: ["안내 방송이 오늘의 특가를 읽는다.", "에스컬레이터가 끝없이 올라간다.", "푸드코트에서 통조림 따는 소리가 들린다."],
   spider: ["천장에서 거미줄 같은 실이 늘어진다.", "복도 끝에서 아비의 발소리가 지나간다.", "어딘가에서 아비들이 웃는 소리가 들린다."],
 };
@@ -318,6 +320,7 @@ const WINGS = [
   { co: "R사", flavor: "용병을 길러 내는 군사 기업. 팀 이름이 동물 이름이다." },
   { co: "N사", flavor: "경험을 통조림에 담는 날개. 영상을 남기는 것과 경험을 위조하는 것을 금기로 삼는다." },
   { co: "T사", flavor: "시간과 관련된 특이점을 쥐고 있다. 근무 시간이 늘 이상하게 길다." },
+  { co: "S사", flavor: "조선을 닮은 날개. 기와집과 돌담길 사이로 갓을 쓴 사람들이 오간다." },
   { co: "H사", flavor: "가씨 · 설씨 · 사씨 세 가문이 이끄는 날개. 재갈을 쥔 주인 곁에는 늘 흑수가 있다." },
 ];
 const FINGERS = [
@@ -1358,7 +1361,7 @@ const EVENTS = [
       { label: "못 본 척한다", run: () => "고개를 숙이고 지나갔다. 이 구역에서는 그게 예법이다." },
     ] }) },
   { id: "hAssassin", w: () => (s.job?.type === "hlord" ? 1.5 : s.job?.type === "hhead" ? 1 : 0), run: () => ({
-    combat: { name: "자객", desc: "한밤중 침실의 장지문이 소리 없이 열렸다. 다른 가문이 보낸 흑수다.", str: s.job.type === "hlord" ? 100 : 70, cause: "다른 가문이 보낸 자객에게" },
+    combat: { name: "자객", desc: "한밤중 침소의 붉은 문이 소리 없이 열렸다. 다른 가문이 보낸 흑수다.", str: s.job.type === "hlord" ? 100 : 70, cause: "다른 가문이 보낸 자객에게" },
     win() { s.rep += 5; return "자객을 베었다. 누가 보냈는지는 이미 알고 있다."; },
     fled() { s.rep -= 5; return "뒷문으로 몸을 피했다. 아침이 되자 소문이 돌았다."; },
   }) },
@@ -1612,9 +1615,10 @@ function milestones() {
   if (s.birthStar && s.age === 16) m("별호", `어느 밤, 잠에서 깨어나 보니 가슴속에 이름 하나가 새겨져 있었다. ${STAR_TIER[s.birthStar.tier]}의 ${s.birthStar.name}. 누가 알려 준 것도 아닌데 처음부터 알고 있던 것 같았다. 이 별을 가진 사람이 또 있는지, 누가 별을 가졌는지는 아무도 모른다. 이 일은 누구에게도 말하지 않기로 했다.`, () => { s.starKnown = true; achieve(s.birthStar.tier); });
   if (s.zone === "spider") return spiderMilestones(out, m);
   if (s.age === 1) m("첫걸음", nestLike(s) ? "깨끗한 바닥 위에서 첫걸음을 뗐다." : "녹슨 철판 위에서 첫걸음을 뗐다.");
-  if (isH(s) && s.age === 6) m("서당", "H사 구역의 서당에 들어갔다. 예법과 글씨, 그리고 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
+  if (isS(s) && s.age === 6) m("서당", "S사 구역의 서당에 들어갔다. 훈장님 앞에서 천자문을 외우고, 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
+  if (isH(s) && s.age === 6) m("사숙", "H사 구역의 사숙에 들어갔다. 붓으로 경전을 베껴 쓰고, 가문의 예법과 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
   if (s.hFamily && s.age === 16) m("가주 후보", `${s.hFamily}의 원로회가 당신을 H사 가주 후보로 내세웠다. 다른 두 가문도 저마다 후보를 세웠다. 그날부터 모두의 눈빛이 달라졌다.`, () => { s.heir = { wins: 0 }; achieve("heir"); });
-  if (s.age === 6 && !isH(s)) {
+  if (s.age === 6 && !isH(s) && !isS(s)) {
     if (s.zone === "wing") m("사내 학교", `${s.wingCo} 직원 자녀들이 다니는 학교에 들어갔다. 교과서 표지에도 날개 로고가 박혀 있다.`, () => gain("prud", 6));
     else if (s.zone === "nest") m("입학", "둥지의 학교에 들어갔다. 날개 입사를 목표로 하는 아이들 사이에서.", () => gain("prud", 4));
     else m("골목의 학교", "학교는 없었다. 대신 골목이 가르쳐 주었다. 3시 10분 전에는 집에 들어가야 한다는 것을.", () => gain("temp", 3));
@@ -1873,7 +1877,7 @@ function passive() {
   else if (j?.type === "butler") income = 4000 + j.rank * 3000;
   if (income) { s.money += income; say(`${jobLabel(j)} 수입 ${fmt(income)}안.`, "act"); }
   if (s.age >= 18) {
-    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, sisyphe: 200 })[zkey(s)] + s.kids * (nestLike(s) ? 1500 : 300);
+    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, scorp: 1200, sisyphe: 200 })[zkey(s)] + s.kids * (nestLike(s) ? 1500 : 300);
     s.money -= cost;
   }
   if (s.money < -3000) {
@@ -2064,7 +2068,7 @@ const PHRASE_SPIDER = { play: "실 사이에 숨어 혼자 논다", study: "몰�
 const GOAL_IDS = ["becomeHead", "lordChallenge"];
 const SPIDER_OK = ["sleep", "babble", "crawl", "toy", "play", "study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm"];
 // 놀이는 사는 곳에 따라 다르게 부른다
-const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린이집 마당에서 뛰어논다", hcorp: "기와집 마당에서 뛰어논다", out: "폐허 사이를 뛰어다닌다" };
+const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린이집 마당에서 뛰어논다", hcorp: "사합원 안마당에서 뛰어논다", scorp: "기와집 마당에서 뛰어논다", out: "폐허 사이를 뛰어다닌다" };
 const phrase0 = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
 const phrase = a => (a.id === "play" && PLAY_PLACE[zkey(s)]) || phrase0(a);
 const SISYPHE_OK = ["study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe", "feed"];
@@ -2184,7 +2188,8 @@ function renderIntro() {
     const kid = gx("아들", "딸");
     const birth = {
       nest: `${where(s)}에서 ${kid}로 태어났다. 날개의 보호 아래, 비교적 운이 좋은 출발이다.`,
-      hcorp: s.hFamily ? `H사 ${s.hFamily}에서 ${kid}로 태어났다. H사의 가주가 될 수 있는 세 가문 가운데 하나다.` : `${where(s)}의 평범한 집에서 ${kid}로 태어났다. 기와지붕 위로 날개의 깃발이 펄럭인다.`,
+      hcorp: s.hFamily ? `H사 ${s.hFamily}에서 ${kid}로 태어났다. H사의 가주가 될 수 있는 세 가문 가운데 하나다.` : `${where(s)}의 평범한 집에서 ${kid}로 태어났다. 붉은 등롱이 걸린 처마 위로 날개의 깃발이 펄럭인다.`,
+      scorp: `${where(s)}의 기와집에서 ${kid}로 태어났다. 돌담 너머로 날개의 깃발이 펄럭인다.`,
       wing: `${s.wingCo} 직원 가정의 ${kid}로 태어났다. ${WINGS.find(w => w.co === s.wingCo)?.flavor ?? ""} 출입증이 있는 아기다.`,
       back: `${where(s)}에서 ${kid}로 태어났다. 뒷골목의 낡은 방 한 칸. 흔한 시작이다.`,
       out: `${where(s)}에서 ${kid}로 태어났다. 도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다.`,
