@@ -68,6 +68,10 @@ header.top { display: flex; align-items: baseline; justify-content: space-betwee
 .field label { font-size: 12px; letter-spacing: .12em; color: var(--muted); }
 .field-row { display: flex; gap: 8px; }
 .field input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line-strong); padding: 10px 12px; border-radius: 3px; font-size: 17px; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg label { display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--line-strong); padding: 8px 14px; border-radius: 3px; cursor: pointer; font-size: 15px; letter-spacing: 0; color: var(--fg); }
+.seg input { accent-color: var(--brass); margin: 0; }
+.seg label:has(input:checked) { border-color: var(--brass); color: var(--brass); }
 .graves { display: grid; gap: 8px; }
 .grave { border-left: 2px solid var(--brass-dim); padding: 4px 0 4px 12px; }
 .grave b { font-family: var(--serif); }
@@ -182,6 +186,7 @@ const store = {
 
 // ───────── 세계 데이터 ─────────
 const VIRTUES = [["fort", "용기"], ["prud", "신중"], ["temp", "자제"], ["just", "정의"]];
+const GENDERS = { m: "남성", f: "여성" };
 const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽" };
 const NAMES = ["로웰", "하윤", "이든", "세라", "도윤", "카린", "밀레", "준", "아델", "시오", "레오", "나윤", "에단", "루카", "미르", "소라", "벨", "그레타", "오스카", "유리", "하람", "티모", "이사", "펠릭스", "다온", "노아", "비비안", "로아"];
 const WINGS = [
@@ -213,12 +218,13 @@ let s = null;
 let queue = [];
 let modalOpen = false;
 
-function newLife(name) {
+function newLife(name, gender) {
   const r = Math.random();
   const zone = r < 0.12 ? "nest" : r < 0.96 ? "back" : "out";
   const base = zone === "nest" ? 8 : 4;
   return {
     name: name || pick(NAMES),
+    gender: gender === "m" || gender === "f" ? gender : pick(["m", "f"]),
     age: 0,
     district: rand(1, 25),
     zone,
@@ -751,7 +757,7 @@ function finish() {
   modalOpen = false;
   $("#modalRoot").innerHTML = "";
   const graves = store.get(GRAVE_KEY) || [];
-  graves.unshift({ name: s.name, age: s.age, where: where(s), job: jobLabel(s.bestJob), cause: s.cause });
+  graves.unshift({ name: s.name, gender: s.gender, age: s.age, where: where(s), job: jobLabel(s.bestJob), cause: s.cause });
   store.set(GRAVE_KEY, graves.slice(0, 12));
   store.del(SAVE_KEY);
   render();
@@ -797,7 +803,7 @@ function renderSheet() {
     <div class="who">
       <div class="eyebrow">시민 기록</div>
       <h2>${esc(s.name)}</h2>
-      <div class="meta">${s.age}세 · ${esc(where(s))}</div>
+      <div class="meta">${s.age}세 · ${GENDERS[s.gender] || "성별 미상"} · ${esc(where(s))}</div>
     </div>
     ${bar("체력", s.hp, "var(--blood)")}
     ${bar("정신력", s.sp, "var(--mind)")}
@@ -882,21 +888,29 @@ function renderIntro() {
             <button class="btn" id="randName">무작위</button>
           </div>
         </div>
+        <div class="field">
+          <label id="genderLabel">성별</label>
+          <div class="seg" role="radiogroup" aria-labelledby="genderLabel">
+            <label><input type="radio" name="gender" id="gender-m" value="m" checked>남성</label>
+            <label><input type="radio" name="gender" id="gender-f" value="f">여성</label>
+            <label><input type="radio" name="gender" id="gender-r" value="r">무작위</label>
+          </div>
+        </div>
         <button class="btn primary advance" id="born">태어난다</button>
       </section>
       <section class="card" style="padding:22px">
         <div class="eyebrow">지난 생의 묘비</div>
         <h2 style="font-size:22px">${graves.length ? "먼저 간 사람들" : "아직 묘비가 없다"}</h2>
-        <div class="graves">${graves.length ? graves.map(g => `<div class="grave"><b>${esc(g.name)}</b> · ${g.age}세 · ${esc(g.job)}<span>${esc(g.where)} — ${esc(g.cause)}</span></div>`).join("")
+        <div class="graves">${graves.length ? graves.map(g => `<div class="grave"><b>${esc(g.name)}</b> · ${GENDERS[g.gender] ? GENDERS[g.gender] + " · " : ""}${g.age}세 · ${esc(g.job)}<span>${esc(g.where)} — ${esc(g.cause)}</span></div>`).join("")
           : `<p>한 생을 마치면 여기에 이름이 남는다. 도시에서 묘비를 가진다는 것만으로도 운이 좋은 편이다.</p>
              <div class="grave"><b>예시) 로웰</b> · 34세 · 4급 해결사<span>14구 뒷골목 — 조직 소탕 의뢰에 실패하여</span></div>`}</div>
       </section>
     </div>`;
   $("#randName").addEventListener("click", () => { $("#nameInput").value = pick(NAMES); });
   $("#born").addEventListener("click", () => {
-    s = newLife($("#nameInput").value.trim());
+    s = newLife($("#nameInput").value.trim(), document.querySelector('input[name="gender"]:checked')?.value);
     s.ap = apFor(s);
-    say(`${where(s)}에서 태어났다. ${s.zone === "nest" ? "날개의 보호 아래, 비교적 운이 좋은 출발이다." : s.zone === "back" ? "뒷골목의 낡은 방 한 칸. 흔한 시작이다." : "도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다."}`, "event", "탄생");
+    say(`${where(s)}에서 ${s.gender === "m" ? "아들" : "딸"}로 태어났다. ${s.zone === "nest" ? "날개의 보호 아래, 비교적 운이 좋은 출발이다." : s.zone === "back" ? "뒷골목의 낡은 방 한 칸. 흔한 시작이다." : "도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다."}`, "event", "탄생");
     save(); render();
   });
 }
