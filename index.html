@@ -264,9 +264,26 @@ const RELICS = [
   { name: "자양화", pow: 8, stat: "temp", hidden: true, desc: "푸른 수국 장식. 쥐고 있으면 이유 모를 그리움이 밀려온다." },
   // 대호수의 전리품
   { name: "창백한 고래의 심장", pow: 35, curse: "sp", hidden: true, desc: "아직도 느리게 뛰는 거대한 심장. 귀를 대면 파도 소리와 누군가의 집착이 들린다." },
+  { name: "청새치 고래의 위턱", pow: 40, curse: "hp", hidden: true, desc: "창처럼 길게 뻗은 위턱. 쥐는 손바닥이 늘 조금씩 베인다." },
+  { name: "새빨간 고래의 혓바닥", pow: 38, curse: "sp", hidden: true, desc: "아직도 붉고 축축한 혓바닥. 밤마다 무언가를 맛보고 싶어진다." },
 ];
 // 마지막 글자에 받침이 있는지 (조사 고르기용)
 const hasBatchim = w => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
+// 대호수의 고래들. 거대한 만큼 느려서 합에서는 위력의 일부(clashScale)만 쓴다.
+const WHALES = [
+  { id: "paleWhale", flag: "whaleDone", ach: "whale", name: "창백한 고래", hp: 5000, str: 500, clashScale: 0.5, min: 200, loot: "창백한 고래의 심장",
+    intro: "항해 중 호수의 물빛이 하얗게 바랬다. 수면 아래에서 섬만 한 그림자가 떠오른다.",
+    desc: "숨 한 번에 파도가 일고, 꼬리 한 번에 배가 기운다. 너무 거대해서 움직임이 느리다. 그 틈을 노려야 한다.",
+    end: "작살이 심장에 닿았다. 창백한 고래가 천천히 가라앉으며 호수 전체가 고요해졌다." },
+  { id: "marlinWhale", flag: "marlinDone", ach: "marlin", name: "청새치 고래", hp: 4800, str: 760, clashScale: 0.37, min: 240, loot: "청새치 고래의 위턱",
+    intro: "수면을 가르며 창 같은 위턱이 솟구쳤다. 돛대 하나가 단번에 꿰뚫려 부러졌다.",
+    desc: "창처럼 뻗은 위턱으로 배를 꿰뚫는 고래. 셋 중 가장 빠르고 가장 사납다.",
+    end: "위턱을 피해 등 위로 뛰어올라 작살을 박아 넣었다. 청새치 고래가 마지막으로 하늘을 향해 솟구쳤다가 떨어졌다." },
+  { id: "redWhale", flag: "redWhaleDone", ach: "redWhale", name: "새빨간 고래", hp: 6000, str: 670, clashScale: 0.4, min: 240, loot: "새빨간 고래의 혓바닥",
+    intro: "호수가 피처럼 붉게 물들었다. 거대한 입이 열리며 물이 소용돌이친다.",
+    desc: "무엇이든 삼키는 붉은 고래. 가장 거대하고 가장 질기다.",
+    end: "붉은 입 안쪽 깊숙이 작살을 꽂았다. 새빨간 고래가 몸을 비틀며 가라앉자 붉은 물빛도 천천히 걷혔다." },
+];
 const relicOf = n => RELICS.find(r => r.name === n);
 const SCENES = {
   back: ["골목에 녹슨 비가 내린다.", "멀리서 해결사들의 총성이 들린다.", "옆방 사람이 또 바뀌었다.", "골목 끝 공방에서 용접 불꽃이 튄다."],
@@ -301,7 +318,7 @@ const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  leiHeng: "동부십검을 꺾다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -1382,28 +1399,8 @@ const EVENTS = [
       }) },
       { label: "숨을 죽이고 물러난다", run: () => "안개가 걷힐 때까지 벽에 등을 붙이고 있었다. 칼리는 이쪽을 보지도 않았다." },
     ] }) },
-  // 히든 보스: 창백한 고래 (체력 5000 · 위력 500 · 망 없음)
-  { id: "paleWhale", w: () => (!s.whaleDone && ["sailor", "pirate"].includes(s.job?.type) && power(s) >= 200 ? 0.5 : 0), run: () => ({
-    title: "창백한 고래",
-    text: "항해 중 호수의 물빛이 하얗게 바랬다. 수면 아래에서 섬만 한 그림자가 떠오른다.\n대호수의 고래. 창백한 고래.\n선원들이 비명을 지르며 돛줄을 놓쳤다. 작살을 쥔 손이 떨린다.",
-    choices: [
-      { label: "작살을 들고 뱃머리에 선다", sub: "체력 5000 · 위력 500 · 처치하면 창백한 고래의 심장", run: () => ({
-        combat: {
-          name: "창백한 고래", hp: 5000, str: 500, clashScale: 0.5, dmgMult: 4, hitMult: 0.35, noCap: true, yieldAt: 10,
-          desc: "대호수의 고래. 숨 한 번에 파도가 일고, 꼬리 한 번에 배가 기운다. 너무 거대해서 움직임이 느리다. 그 틈을 노려야 한다.",
-          cause: "창백한 고래에게 삼켜져",
-        },
-        win(n) {
-          s.whaleDone = true;
-          s.rep += 100;
-          achieve("whale");
-          return `${n}합 끝에 작살이 심장에 닿았다. 창백한 고래가 천천히 가라앉으며 호수 전체가 고요해졌다. ${gainRelic(relicOf("창백한 고래의 심장"))}`;
-        },
-        lose() { s.money = Math.floor(s.money * 0.7); return "배가 뒤집혔다. 정신을 차렸을 때는 부서진 갑판 조각에 매달려 있었다. 고래는 이미 깊이 잠겨 있었다."; },
-        fled() { return "키를 꺾어 안개 속으로 도망쳤다. 등 뒤에서 거대한 숨소리가 오래 따라왔다."; },
-      }) },
-      { label: "배를 돌린다", run: () => "선원들과 함께 노를 저었다. 하얀 그림자는 쫓아오지 않았다." },
-    ] }) },
+  // 히든 보스: 대호수의 고래들
+  ...WHALES.map(whaleEvent),
   { id: "busker", w: () => (s.age >= 8 && s.zone !== "sisyphe" ? 1 : 0), run: () => ({
     title: "길거리 연주자",
     text: "녹슨 바이올린을 켜는 사람이 있다. 아무도 멈춰 서지 않는다.",
@@ -1547,6 +1544,25 @@ function milestones() {
 // ───────── 거미집 ─────────
 const teachOf = name => (s.spider?.teach || {})[name] || 0;
 // 아비를 쓰러뜨리면 그 아비의 물건 두 가지를 얻는다
+function whaleEvent(wh) {
+  return {
+    id: wh.id,
+    w: () => (!s[wh.flag] && ["sailor", "pirate"].includes(s.job?.type) && power(s) >= wh.min ? 0.4 : 0),
+    run: () => ({
+      title: wh.name,
+      text: `${wh.intro}\n대호수의 고래. ${wh.name}.\n선원들이 비명을 지르며 돛줄을 놓쳤다. 작살을 쥔 손이 떨린다.`,
+      choices: [
+        { label: "작살을 들고 뱃머리에 선다", sub: `체력 ${fmt(wh.hp)} · 위력 ${wh.str} · 처치하면 ${wh.loot}`, run: () => ({
+          combat: { name: wh.name, hp: wh.hp, str: wh.str, clashScale: wh.clashScale, dmgMult: 4, hitMult: 0.35, noCap: true, yieldAt: 10, desc: `대호수 · 고래. ${wh.desc}`, cause: `${wh.name}에게 삼켜져` },
+          win(n) { s[wh.flag] = true; s.rep += 100; achieve(wh.ach); return `${n}합 끝에 ${wh.end} ${gainRelic(relicOf(wh.loot))}`; },
+          lose() { s.money = Math.floor(s.money * 0.7); return `배가 뒤집혔다. 정신을 차렸을 때는 부서진 갑판 조각에 매달려 있었다. ${wh.name}은(는) 이미 깊이 잠겨 있었다.`; },
+          fled() { return "키를 꺾어 안개 속으로 도망쳤다. 등 뒤에서 거대한 숨소리가 오래 따라왔다."; },
+        }) },
+        { label: "배를 돌린다", run: () => "선원들과 함께 노를 저었다. 거대한 그림자는 쫓아오지 않았다." },
+      ],
+    }),
+  };
+}
 function abiLoot(name) {
   return (ABI[name].loot || []).filter(n => !(s.relics || []).includes(n)).map(n => gainRelic(relicOf(n))).join(" ");
 }
