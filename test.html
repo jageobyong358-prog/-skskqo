@@ -229,7 +229,7 @@ const ABI = {
 const H_FAMILIES = ["가씨 가문", "설씨 가문", "사씨 가문"];
 // 흑수: 환을 먹고 흑수가 되어, 재갈을 쥔 주인을 호위하는 H사의 병기. 가장 높은 자리는 필두.
 const HEISHOU = ["묘", "사", "술", "신", "진", "유", "인", "오", "미", "해", "축"];
-const HEISHOU_RANKS = ["흑수", "정예", "필두"];
+const HEISHOU_RANKS = ["흑수", "필두"];
 const SHIPS = ["회색 고래", "검은 물보라", "녹슨 닻", "새벽 갈매기", "끝없는 수평선"];
 const LAKE_FOES = ["호수 밑에서 올라온 거대한 그림자", "대호수의 식인 어군", "안개 속의 유령선", "촉수 달린 괴어"];
 const TABOO_FOES = ["시간을 되감으려는 연구자", "인공지능에 몸을 맡긴 자", "복제인간 공장의 주인", "금기 기술 밀매상"];
@@ -926,8 +926,8 @@ function heishouWork() {
     combat: { name: `다른 가문의 흑수 - ${other}`, desc: `${master}을(를) 노리고 다른 가문의 흑수가 들이닥쳤다. 재갈을 쥔 손이 등 뒤에 있다. 물러설 곳은 없다.`, str: 40 + j.rank * 15, yieldAt: 12, cause: `${master}을(를) 지키다 흑수 - ${other}에게` },
     win() {
       s.money += m; s.rep += 2;
-      if (j.rank < 2 && chance(0.3)) { j.rank++; setJob(j); if (j.rank === 2) achieve("pildu"); }
-      return `흑수 - ${other}을(를) 물리쳤다. ${master}은(는) 재갈을 한 번 당겼다. 칭찬인지 경고인지는 모른다. ${fmt(m)}안.${j.rank === 2 ? " 이제 흑수 가운데 가장 높은 필두다." : j.rank ? ` 지금은 ${jobLabel(j)}.` : ""}`;
+      if (j.rank < 1 && chance(0.25)) { j.rank = 1; setJob(j); achieve("pildu"); }
+      return `흑수 - ${other}을(를) 물리쳤다. ${master}은(는) 재갈을 한 번 당겼다. 칭찬인지 경고인지는 모른다. ${fmt(m)}안.${j.rank === 1 && s.ach.includes("pildu") && !j.announced ? ((j.announced = true), " 이제 흑수 가운데 가장 높은 필두다.") : ""}`;
     },
     lose() { s.rep -= 2; strain(rand(4, 10), "재갈이 당겨지는 고통에"); return s.alive ? "막아 내지 못했다. 그날 밤 재갈이 몇 번이고 당겨졌다." : ""; },
   };
@@ -2256,7 +2256,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
     "혈귀 사냥꾼": { type: "bloodHunter", rank: 0, exp: 0 },
     "전투 집사": { type: "butler", house: "은빛 장미 저택", rank: 0 },
     "유적 탐사가": { type: "relicHunter", rank: 0, exp: 0 },
-    "흑수 필두": { type: "heishou", branch: "묘", rank: 2, master: "가씨 가문의 로웰" },
+    "흑수 필두": { type: "heishou", branch: "묘", rank: 1, master: "가씨 가문의 로웰" },
     "가주": { type: "hhead", family: "가씨 가문" },
     "머리의 발톱": { type: "claw" },
   };

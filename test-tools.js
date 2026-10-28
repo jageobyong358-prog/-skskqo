@@ -30,7 +30,7 @@
     "혈귀 사냥꾼": { type: "bloodHunter", rank: 0, exp: 0 },
     "전투 집사": { type: "butler", house: "은빛 장미 저택", rank: 0 },
     "유적 탐사가": { type: "relicHunter", rank: 0, exp: 0 },
-    "흑수 필두": { type: "heishou", branch: "묘", rank: 2, master: "가씨 가문의 로웰" },
+    "흑수 필두": { type: "heishou", branch: "묘", rank: 1, master: "가씨 가문의 로웰" },
     "가주": { type: "hhead", family: "가씨 가문" },
     "머리의 발톱": { type: "claw" },
   };
