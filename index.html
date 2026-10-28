@@ -260,6 +260,10 @@ const RELICS = [
   { name: "마에스트로의 반지", pow: 10, stat: "temp", hidden: true, desc: "약지 마에스트로의 증표. 끼고 있으면 모든 것이 재료로 보인다." },
   // 붉은 안개의 전리품
   { name: "미미크리 [프로토타입]", pow: 30, curse: "hp", hidden: true, desc: "붉은 안개가 쓰던 E.G.O 무기의 시제품. 벤 것을 먹고 주인의 피도 탐낸다." },
+  { name: "지혜성도", pow: 20, hidden: true, desc: "소지의 오오타치. 베고 지나간 자리에 파란 검흔이 남는다." },
+  { name: "자양화", pow: 8, stat: "temp", hidden: true, desc: "푸른 수국 장식. 쥐고 있으면 이유 모를 그리움이 밀려온다." },
+  // 대호수의 전리품
+  { name: "창백한 고래의 심장", pow: 35, curse: "sp", hidden: true, desc: "아직도 느리게 뛰는 거대한 심장. 귀를 대면 파도 소리와 누군가의 집착이 들린다." },
 ];
 // 마지막 글자에 받침이 있는지 (조사 고르기용)
 const hasBatchim = w => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
@@ -297,7 +301,7 @@ const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", kali: "붉은 안개를 걷어 내다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  leiHeng: "동부십검을 꺾다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -509,7 +513,7 @@ function exchange(id) {
   if (id === "araya") { const lost = rand(3, 7); bonus = 30; mult = 1.6; tag = `아라야시키 · 기억 -${lost}`; loseMemory(lost); }
   if (!s.alive) return endCombat("dead");
   const pr = Math.round(power(s) * 0.6 + bonus + rand(0, 25));
-  const er = Math.round(e.str * 0.6 + (e.mang || 0) * 10 + rand(0, 25) - (e.easy || 0));
+  const er = Math.round(e.str * 0.6 * (e.clashScale || 1) + (e.mang || 0) * 10 + rand(0, 25) - (e.easy || 0));
   const head = `${c.n}합${tag ? ` · ${tag}` : ""} — ${pr} 대 ${er}.`;
   if (pr >= er) {
     const d = Math.round(clamp((pr - er * 0.5) * mult * (guard ? 0.5 : 1) * (e.dmgMult || 1), 4, e.noCap ? Infinity : 90));
@@ -1378,6 +1382,28 @@ const EVENTS = [
       }) },
       { label: "숨을 죽이고 물러난다", run: () => "안개가 걷힐 때까지 벽에 등을 붙이고 있었다. 칼리는 이쪽을 보지도 않았다." },
     ] }) },
+  // 히든 보스: 창백한 고래 (체력 5000 · 위력 500 · 망 없음)
+  { id: "paleWhale", w: () => (!s.whaleDone && ["sailor", "pirate"].includes(s.job?.type) && power(s) >= 200 ? 0.5 : 0), run: () => ({
+    title: "창백한 고래",
+    text: "항해 중 호수의 물빛이 하얗게 바랬다. 수면 아래에서 섬만 한 그림자가 떠오른다.\n대호수의 고래. 창백한 고래.\n선원들이 비명을 지르며 돛줄을 놓쳤다. 작살을 쥔 손이 떨린다.",
+    choices: [
+      { label: "작살을 들고 뱃머리에 선다", sub: "체력 5000 · 위력 500 · 처치하면 창백한 고래의 심장", run: () => ({
+        combat: {
+          name: "창백한 고래", hp: 5000, str: 500, clashScale: 0.5, dmgMult: 4, hitMult: 0.35, noCap: true, yieldAt: 10,
+          desc: "대호수의 고래. 숨 한 번에 파도가 일고, 꼬리 한 번에 배가 기운다. 너무 거대해서 움직임이 느리다. 그 틈을 노려야 한다.",
+          cause: "창백한 고래에게 삼켜져",
+        },
+        win(n) {
+          s.whaleDone = true;
+          s.rep += 100;
+          achieve("whale");
+          return `${n}합 끝에 작살이 심장에 닿았다. 창백한 고래가 천천히 가라앉으며 호수 전체가 고요해졌다. ${gainRelic(relicOf("창백한 고래의 심장"))}`;
+        },
+        lose() { s.money = Math.floor(s.money * 0.7); return "배가 뒤집혔다. 정신을 차렸을 때는 부서진 갑판 조각에 매달려 있었다. 고래는 이미 깊이 잠겨 있었다."; },
+        fled() { return "키를 꺾어 안개 속으로 도망쳤다. 등 뒤에서 거대한 숨소리가 오래 따라왔다."; },
+      }) },
+      { label: "배를 돌린다", run: () => "선원들과 함께 노를 저었다. 하얀 그림자는 쫓아오지 않았다." },
+    ] }) },
   { id: "busker", w: () => (s.age >= 8 && s.zone !== "sisyphe" ? 1 : 0), run: () => ({
     title: "길거리 연주자",
     text: "녹슨 바이올린을 켜는 사람이 있다. 아무도 멈춰 서지 않는다.",
@@ -1645,14 +1671,16 @@ function gauntlet(list) {
   };
   if (name === "가짜 요루") return {
     combat: {
-      name: "소지의 아비 시오미 요루", mang: 3, str: 96, easy: teachOf("요루") * 4, flee: false,
+      name: "소지의 아비 시오미 요루", mang: 3, str: 112, easy: teachOf("요루") * 4, flee: false,
       desc: "죽였을 터인 시오미 요루가 하얀 시로무쿠 차림으로 서 있다. 지혜성도가 지나간 자리마다 파란 검흔이 남는다. 그녀가 세 겹의 망을 감았다. 얼굴이 어딘가 낯익지만, 떠오르지 않는다.",
       cause: "소지의 아비 시오미 요루의 지혜성도에 베여",
     },
     win() {
       s.araya = "lost";
       strain(rand(10, 20), "이유 모를 슬픔에");
-      return s.alive ? between("요루가 쓰러졌다. 머리에서 풀린 붉은 리본이 바닥에 떨어졌다. 어디선가 본 것 같았지만, 아라야시키가 지워 간 기억 사이로 빠져나갔다.") : "";
+      if (!s.alive) return "";
+      const loot = ["지혜성도", "자양화"].filter(n => !(s.relics || []).includes(n)).map(n => gainRelic(relicOf(n))).join(" ");
+      return between("요루가 쓰러졌다. 머리에서 풀린 붉은 리본이 바닥에 떨어졌다. 어디선가 본 것 같았지만, 아라야시키가 지워 간 기억 사이로 빠져나갔다. " + loot);
     },
   };
   if (name === "뤼엔") return {
