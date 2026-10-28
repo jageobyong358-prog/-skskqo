@@ -219,7 +219,7 @@ const streetLike = st => st.zone === "back" || st.zone === "out";
 // 거미집의 아비들. 시오미 요루(소지)는 탈출 전까지 거미집에 남아 있다.
 const ABI = {
   "뤼엔": { finger: "검지", str: 105, mang: 3, desc: "검은 양복에 가면을 쓴 검지의 신탁 대행자. 거미집의 판을 짠 사람이고, 모든 것을 지령의 이름으로 행한다." },
-  "발렌치나": { finger: "엄지", full: "발렌치나 보냐텔리", str: 80, mang: 1, desc: "보냐텔리 가문에서 쫓겨난 연기 전쟁의 영웅. 합을 주고받을수록 빨라지는 속검술 팔레르모, 오른눈에 박힌 오딘의 눈." },
+  "발렌치나": { finger: "엄지", full: "발렌치나 보냐텔리", str: 80, mang: 1, line: "어디 갔었어, 우리 아가? 엄마가 얼마나 찾았는데. 이리 와, 혼 좀 나자.", desc: "보냐텔리 가문에서 쫓겨난 연기 전쟁의 영웅. 합을 주고받을수록 빨라지는 속검술 팔레르모, 오른눈에 박힌 오딘의 눈." },
   "마티아스": { finger: "중지", str: 76, mang: 0, desc: "중지의 큰형님. 봉인 붕대가 한 겹씩 풀릴 때마다 대검 레바테인이 열기를 토한다." },
   "칼리스토": { finger: "약지", str: 72, mang: 0, desc: "약지 신체파의 전직 마에스트로. 뼈와 근육을 늘이는 티비아를 휘두르고, 개조 인형들을 부린다." },
   "요루": { finger: "소지", full: "시오미 요루", str: 74, mang: 0, desc: "하얀 시로무쿠 차림의 어머니. 지혜성도가 지나간 자리마다 파란 검흔이 남는다." },
@@ -247,7 +247,7 @@ const WINGS = [
   { co: "K사", flavor: "재생 앰플을 만드는 회사. 상처가 아물기 전에 다시 출근하게 된다." },
   { co: "W사", flavor: "구 사이를 순식간에 잇는 워프 열차를 운영한다. 승무원은 청소 담당을 겸한다." },
   { co: "R사", flavor: "용병을 길러 내는 군사 기업. 팀 이름이 동물 이름이다." },
-  { co: "N사", flavor: "의체 규제에 엄격하다. 종교적인 열정을 품은 이들이 많다." },
+  { co: "N사", flavor: "경험을 통조림에 담는 날개. 영상을 남기는 것과 경험을 위조하는 것을 금기로 삼는다." },
   { co: "T사", flavor: "시간과 관련된 특이점을 쥐고 있다. 근무 시간이 늘 이상하게 길다." },
 ];
 const FINGERS = [
@@ -674,7 +674,7 @@ function wingExam() {
   if (chance(p)) {
     const w = WINGS.find(x => x.co === s.wingCo) || pick(WINGS);
     setJob({ type: "wing", co: w.co, rank: 0 }); achieve("wing");
-    return `${w.co}에 합격했다. ${w.flavor} 날개의 그늘 아래로 들어갔다.${w.co === "N사" ? " 입사 서약의 첫 줄은 이랬다. 몸에 기계를 들이지 말 것." : ""}`;
+    return `${w.co}에 합격했다. ${w.flavor} 날개의 그늘 아래로 들어갔다.${w.co === "N사" ? " 입사 서약은 두 줄이었다. 영상을 녹화하지 말 것. 경험을 위조하지 말 것." : ""}`;
   }
   return "불합격 통지를 받았다. 날개의 문은 좁다.";
 }
@@ -893,18 +893,17 @@ function quitJob() {
   return `${old} 일을 그만뒀다.`;
 }
 
-function breakN() { if (isN()) s.nTaboo = true; }
 function augment() {
   return {
     title: "의체 공방",
-    text: `녹슨 간판 아래 공방. 기술자가 카탈로그를 내민다.\n"어디를 바꿔 드릴까. 돈만 있으면 뭐든 됩니다."${isN() ? "\nN사의 규율이 머릿속을 스친다. 몸에 기계를 들이는 것은 N사의 금기다." : ""}`,
+    text: `녹슨 간판 아래 공방. 기술자가 카탈로그를 내민다.\n"어디를 바꿔 드릴까. 돈만 있으면 뭐든 됩니다."`,
     choices: [
       { label: "중고 팔 (3,000안)", sub: "용기 +6 · 정신 -8", cond: () => s.money >= 3000,
-        run() { s.money -= 3000; s.aug++; breakN(); gain("fort", 6); strain(8, "의체 거부 반응으로"); return "중고 의수를 달았다. 전 주인의 버릇이 남아 있다."; } },
+        run() { s.money -= 3000; s.aug++; gain("fort", 6); strain(8, "의체 거부 반응으로"); return "중고 의수를 달았다. 전 주인의 버릇이 남아 있다."; } },
       { label: "반사 신경 칩 (8,000안)", sub: "정의 +10 · 정신 -10", cond: () => s.money >= 8000,
-        run() { s.money -= 8000; s.aug++; breakN(); gain("just", 10); strain(10, "신경 칩 부작용으로"); return "척추에 칩을 심었다. 세상이 조금 느리게 보인다."; } },
+        run() { s.money -= 8000; s.aug++; gain("just", 10); strain(10, "신경 칩 부작용으로"); return "척추에 칩을 심었다. 세상이 조금 느리게 보인다."; } },
       { label: "전신 개조 (40,000안)", sub: "용기·정의 +18 · 정신 -20", cond: () => s.money >= 40000,
-        run() { s.money -= 40000; s.aug += 3; breakN(); gain("fort", 18); gain("just", 18); strain(20, "전신 개조의 충격으로"); if (s.aug >= 5) achieve("aug"); return s.alive ? "몸의 절반 이상이 금속이 되었다. 거울 속 얼굴이 낯설다." : ""; } },
+        run() { s.money -= 40000; s.aug += 3; gain("fort", 18); gain("just", 18); strain(20, "전신 개조의 충격으로"); if (s.aug >= 5) achieve("aug"); return s.alive ? "몸의 절반 이상이 금속이 되었다. 거울 속 얼굴이 낯설다." : ""; } },
       { label: "그냥 나간다", run: () => "카탈로그를 덮고 공방을 나왔다." },
     ],
   };
@@ -1038,7 +1037,7 @@ const EVENTS = [
     const name = pick(huntable());
     return {
       title: `${ABI[name].finger}의 아비`,
-      text: `${ABI[name].desc}\n${ABI[name].mang ? `${name}이(가) ${ABI[name].mang}겹의 망을 감았다.` : "망은 없다. 대신 무식할 만큼의 힘이 있다."}\n"찾았다, 우리 ${gx("아들", "딸")}."`,
+      text: `${ABI[name].desc}\n${ABI[name].mang ? `${name}이(가) ${ABI[name].mang}겹의 망을 감았다.` : "망은 없다. 대신 무식할 만큼의 힘이 있다."}\n"${ABI[name].line || `찾았다, 우리 ${gx("아들", "딸")}.`}"`,
       choices: [
         { label: "맞선다", sub: `전투 · 가르침 ${teachOf(name)}/10`, run: () => ({
           combat: abiFoe(name, { yieldAt: 10 }),
@@ -1111,6 +1110,14 @@ const EVENTS = [
     lose() { s.money = Math.floor(s.money / 2); setJob(null); return "붙잡혔다가 몸값을 치르고 풀려났다. 배와 동료는 남지 않았다."; },
     fled() { return "작은 보트로 갈아타고 안개 속으로 도망쳤다."; },
   }) },
+  { id: "nTemptation", w: () => (isN() && !s.nTaboo && s.age >= 18 ? 1.5 : 0), run: () => ({
+    title: "N사의 뒷거래",
+    text: "퇴근길, 동료가 주머니 속 물건을 슬쩍 보여 주었다. 손바닥만 한 녹화기, 그리고 라벨 없는 빈 통조림.\n\"밖에서는 영상 한 편, 가짜 경험 한 통에 큰돈을 쳐준대. 아무도 모를 거야.\"",
+    choices: [
+      { label: "영상을 녹화해 팔아넘긴다", sub: "+12,000안 · N사의 금기", run() { s.money += 12000; s.nTaboo = true; return "작업장의 모습을 몰래 녹화해 넘겼다. 돈은 바로 들어왔다. 그날 밤 누군가 문 앞에 서 있다 간 것 같았다."; } },
+      { label: "가짜 경험 통조림을 찍어 낸다", sub: "+15,000안 · N사의 금기", run() { s.money += 15000; s.nTaboo = true; gain("prud", 3); return "존재하지 않는 누군가의 행복한 하루를 통조림에 담았다. 진짜보다 잘 팔렸다."; } },
+      { label: "거절한다", run() { gain("temp", 3); return "고개를 저었다. 동료는 어깨를 으쓱하고 혼자 걸어갔다. 다음 달, 그의 자리는 비어 있었다."; } },
+    ] }) },
   { id: "broadcast", w: () => 2, run() {
     strain(5);
     return { title: "안내 방송", text: pick([
@@ -1226,10 +1233,10 @@ function abiLesson() {
         gain("just", rand(4, 7));
         if (chance(0.5)) {
           bruise(rand(5, 15));
-          return s.alive ? `합을 주고받을수록 검이 빨라진다고 했다. 그러다 이유 없이 뺨을 맞았다. 수업이 끝나자 "잘했다, 우리 ${kid}" 하고 머리를 쓰다듬었다.${note}` : "";
+          return s.alive ? `"합을 주고받을수록 검은 빨라지는 거야. 알아들었어?" 그러다 이유 없이 뺨을 맞았다. 수업이 끝나자 "잘했어, 우리 ${kid}. 엄마가 때려서 아팠지?" 하며 머리를 쓰다듬었다.${note}` : "";
         }
         heal(0, 8);
-        return `발렌치나가 술병을 내려놓고 박수를 쳤다. "역시 내 ${kid}야." 오른눈의 오딘의 눈이 너의 다음 동작을 먼저 읽었다.${note}`;
+        return `발렌치나가 술병을 내려놓고 박수를 쳤다. "역시 내 ${kid}야. 누가 뭐래도 넌 내 새끼야." 오른눈의 오딘의 눈이 너의 다음 동작을 먼저 읽었다.${note}`;
       } },
       { label: "마티아스 — 대검 난타", sub: `용기 ↑↑ · 체력 소모 · ${t("마티아스")}`, run() {
         const note = learn("마티아스");
@@ -1343,7 +1350,7 @@ function gauntlet(list) {
 function nJudgment() {
   return {
     title: "N사의 심판",
-    text: "N사는 몸에 기계를 들인 자를 용서하지 않는다. 규율을 어긴 자에게 내려지는 벌은 하나, 시지프형이다.\n목에 밧줄이 감겼다. 숨이 끊어지기 직전, 세상이 하얗게 뒤집혔다.",
+    text: "N사는 영상을 남긴 자도, 경험을 위조한 자도 용서하지 않는다. 규율을 어긴 자에게 내려지는 벌은 하나, 시지프형이다.\n목에 밧줄이 감겼다. 숨이 끊어지기 직전, 세상이 하얗게 뒤집혔다.",
     choices: [{ label: "눈을 뜬다", run: enterSisyphe }],
   };
 }
