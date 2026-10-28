@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>도시의 한 생애</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nanum+Myeongjo:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 서류철처럼 쌓인 한 사람의 기록 — 왼쪽 신상 카드, 오른쪽 연대기, 아래 행동 패널 */
+:root {
+  --bg: #121318;
+  --panel: #1b1d24;
+  --panel-2: #23262f;
+  --line: #34374250;
+  --line-strong: #3b3f4b;
+  --fg: #ddd7c8;
+  --muted: #8f8b80;
+  --brass: #c9a14a;
+  --brass-dim: #7d6634;
+  --blood: #b2443a;
+  --mind: #5a9a94;
+  --good: #8db36a;
+  --display: "Black Han Sans", "IBM Plex Sans KR", "Apple SD Gothic Neo", sans-serif;
+  --serif: "Nanum Myeongjo", "AppleMyungjo", "Batang", serif;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 40px;
+  background-image:
+    radial-gradient(1200px 500px at 80% -10%, #c9a14a12, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 3px, #ffffff03 3px 4px);
+}
+button, input { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+
+header.top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--line-strong); padding-bottom: 10px; }
+.brand { font-family: var(--display); font-size: clamp(26px, 5vw, 38px); letter-spacing: 0.02em; line-height: 1.1; color: var(--fg); }
+.brand small { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em; color: var(--brass); text-transform: uppercase; margin-bottom: 4px; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { background: var(--panel-2); border: 1px solid var(--line-strong); padding: 8px 14px; border-radius: 3px; cursor: pointer; transition: border-color .15s, background .15s; text-align: left; }
+.btn:hover:not(:disabled) { border-color: var(--brass); }
+.btn:disabled { opacity: .38; cursor: not-allowed; }
+.btn.primary { background: var(--brass); color: #17140c; border-color: var(--brass); font-weight: 700; }
+.btn.primary:hover:not(:disabled) { background: #d8b25c; }
+.btn.ghost { background: transparent; }
+.btn.danger { border-color: #b2443a80; }
+
+/* 시작 화면 */
+.intro { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; }
+.intro .card { padding: 22px; }
+.intro h2 { font-family: var(--display); font-weight: 400; font-size: 28px; margin: 0 0 8px; text-wrap: balance; }
+.intro p { font-family: var(--serif); margin: 0 0 12px; color: var(--fg); max-width: 60ch; }
+.field { display: grid; gap: 6px; margin: 16px 0; }
+.field label { font-size: 12px; letter-spacing: .12em; color: var(--muted); }
+.field-row { display: flex; gap: 8px; }
+.field input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line-strong); padding: 10px 12px; border-radius: 3px; font-size: 17px; }
+.graves { display: grid; gap: 8px; }
+.grave { border-left: 2px solid var(--brass-dim); padding: 4px 0 4px 12px; }
+.grave b { font-family: var(--serif); }
+.grave span { display: block; font-size: 13px; color: var(--muted); }
+
+.card { background: var(--panel); border: 1px solid var(--line-strong); border-radius: 4px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--brass); }
+
+/* 게임 화면 */
+.game { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.sheet { padding: 18px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.who h2 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 2px 0 0; line-height: 1.15; }
+.who .meta { color: var(--muted); font-size: 13px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.money { font-family: var(--mono); color: var(--brass); }
+.bar { display: grid; gap: 4px; }
+.bar-head { display: flex; justify-content: space-between; font-size: 13px; }
+.bar-head span:last-child { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.bar-track { height: 7px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 1px; overflow: hidden; }
+.bar-fill { height: 100%; transition: width .4s ease; }
+.virtues { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.virtue { background: var(--bg); border: 1px solid var(--line-strong); padding: 8px 10px; border-radius: 3px; display: grid; grid-template-columns: 1fr auto; align-items: baseline; }
+.virtue .name { font-size: 13px; color: var(--muted); }
+.virtue .rank { font-family: var(--display); font-size: 20px; color: var(--brass); line-height: 1; }
+.virtue .num { grid-column: 1 / -1; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-size: 12px; border: 1px solid var(--brass-dim); color: var(--brass); padding: 2px 8px; border-radius: 2px; }
+.chip.warn { border-color: #b2443a90; color: #e07a6f; }
+
+.main { display: grid; gap: 18px; min-width: 0; }
+.panel { padding: 16px 18px; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.panel-head h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 20px; }
+.ap { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.ap b { color: var(--brass); }
+.groups { display: grid; gap: 14px; }
+.group-title { font-size: 12px; letter-spacing: .14em; color: var(--muted); margin-bottom: 6px; }
+.acts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+.act { display: grid; gap: 2px; padding: 10px 12px; }
+.act b { font-weight: 500; }
+.act small { color: var(--muted); font-size: 12px; line-height: 1.4; }
+.advance { width: 100%; text-align: center; padding: 14px; font-size: 17px; margin-top: 14px; font-family: var(--display); font-weight: 400; letter-spacing: .04em; }
+
+.log { padding: 6px 18px 18px; max-height: 560px; overflow-y: auto; }
+.year { padding: 14px 0; border-bottom: 1px dashed var(--line-strong); display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; }
+.year:last-child { border-bottom: 0; }
+.year .age { font-family: var(--display); font-size: 22px; color: var(--brass); line-height: 1.2; }
+.year .age small { display: block; font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .1em; }
+.entries { display: grid; gap: 6px; font-family: var(--serif); font-size: 15px; }
+.entries p { margin: 0; max-width: 68ch; }
+.entries .k-event { color: var(--fg); }
+.entries .k-event b { color: var(--brass); font-family: var(--sans); font-size: 13px; margin-right: 6px; }
+.entries .k-act { color: #bdb7a8; }
+.entries .k-good { color: var(--good); }
+.entries .k-bad { color: #e07a6f; }
+.entries .k-death { color: var(--blood); font-weight: 700; }
+
+/* 모달 */
+.modal-back { position: fixed; inset: 0; background: #07080bcc; display: grid; place-items: center; padding: 20px max(16px, env(safe-area-inset-left, 0px)); z-index: 20; }
+.modal { width: min(560px, 100%); padding: 22px; border-top: 3px solid var(--brass); max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 4px 0 10px; text-wrap: balance; }
+.modal p { font-family: var(--serif); margin: 0 0 16px; white-space: pre-line; }
+.choices { display: grid; gap: 8px; }
+.choices .btn small { display: block; color: var(--muted); font-size: 12px; }
+
+/* 엔딩 */
+.ending { padding: 26px; display: grid; gap: 14px; border-top: 3px solid var(--blood); }
+.ending h2 { font-family: var(--display); font-weight: 400; font-size: 34px; margin: 0; }
+.epitaph { font-family: var(--serif); font-size: 18px; border-left: 2px solid var(--brass); padding-left: 14px; max-width: 60ch; }
+
+.foot { color: var(--muted); font-size: 12px; text-align: center; }
+
+@media (max-width: 820px) {
+  .game, .intro { grid-template-columns: minmax(0, 1fr); }
+  .sheet { position: static; }
+  .log { max-height: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><small>The City · Life Record</small>도시의 한 생애</div>
+    <div class="top-actions" id="topActions"></div>
+  </header>
+  <div id="screen"></div>
+  <p class="foot">Project Moon 세계관(로보토미 코퍼레이션 · 라이브러리 오브 루이나 · 림버스 컴퍼니)을 바탕으로 한 비공식 팬 게임입니다.</p>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+"use strict";
+// ───────── 유틸 ─────────
+const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const chance = p => Math.random() < p;
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = n => Math.round(n).toLocaleString("ko-KR");
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $ = sel => document.querySelector(sel);
+
+const SAVE_KEY = "cityLife.save.v1";
+const GRAVE_KEY = "cityLife.graves.v1";
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+
+// ───────── 세계 데이터 ─────────
+const VIRTUES = [["fort", "용기"], ["prud", "신중"], ["temp", "자제"], ["just", "정의"]];
+const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽" };
+const NAMES = ["로웰", "하윤", "이든", "세라", "도윤", "카린", "밀레", "준", "아델", "시오", "레오", "나윤", "에단", "루카", "미르", "소라", "벨", "그레타", "오스카", "유리", "하람", "티모", "이사", "펠릭스", "다온", "노아", "비비안", "로아"];
+const WINGS = [
+  { co: "L사", flavor: "에너지 기업. 지하 시설에서 무엇을 관리하는지는 묻지 않는 것이 규칙이다." },
+  { co: "K사", flavor: "재생 앰플을 만드는 회사. 상처가 아물기 전에 다시 출근하게 된다." },
+  { co: "W사", flavor: "구 사이를 순식간에 잇는 워프 열차를 운영한다. 승무원은 청소 담당을 겸한다." },
+  { co: "R사", flavor: "용병을 길러 내는 군사 기업. 팀 이름이 동물 이름이다." },
+  { co: "N사", flavor: "의체 규제에 엄격하다. 종교적인 열정을 품은 이들이 많다." },
+  { co: "T사", flavor: "시간과 관련된 특이점을 쥐고 있다. 근무 시간이 늘 이상하게 길다." },
+];
+const FINGERS = [
+  { name: "엄지", flavor: "철저한 위계. 윗사람의 말은 곧 법이다." },
+  { name: "검지", flavor: "지령을 따른다. 이유는 묻지 않는다." },
+  { name: "중지", flavor: "형제의 원한은 반드시 갚는다." },
+  { name: "약지", flavor: "도시를 화폭 삼는 예술가들. 재료는 대개 사람이다." },
+  { name: "소지", flavor: "정보와 은밀함을 다룬다." },
+];
+const SYNDS = ["갈고리 조직", "녹슨 사슬단", "검은 비늘 회", "9번가 형제단", "쥐구멍 상회", "회색 우산파"];
+const COLOR_A = ["진홍", "청록", "회백", "금빛", "칠흑", "은회", "자홍", "적갈", "남빛", "잿빛"];
+const COLOR_B = ["칼날", "늑대", "서리", "파도", "종소리", "안개", "망치", "장미", "등불", "메아리"];
+const ACH = {
+  nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
+  finger: "손가락의 일원", library: "도서관 생환", taboo: "금기를 건드림", night: "청소부를 베다",
+  oldage: "천수를 누림", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
+};
+
+// ───────── 상태 ─────────
+let s = null;
+let queue = [];
+let modalOpen = false;
+
+function newLife(name) {
+  const r = Math.random();
+  const zone = r < 0.12 ? "nest" : r < 0.96 ? "back" : "out";
+  const base = zone === "nest" ? 8 : 4;
+  return {
+    name: name || pick(NAMES),
+    age: 0,
+    district: rand(1, 25),
+    zone,
+    hp: 100, sp: 100,
+    fort: rand(base, base + 8), prud: rand(base, base + 8), temp: rand(base, base + 8), just: rand(base, base + 8),
+    money: 0, rep: 0,
+    job: null, bestJob: null,
+    partner: null, love: 0, married: false, kids: 0,
+    parents: 2, aug: 0, taboo: 0,
+    ap: 1,
+    log: [], ach: [],
+    alive: true, cause: null,
+  };
+}
+
+const apFor = st => (st.age < 6 ? 1 : st.age < 16 ? 2 : 3);
+const power = st => (st.fort + st.just) / 2 + st.prud / 10 + st.aug * 3;
+const rankOf = v => (v >= 100 ? "EX" : ["I", "II", "III", "IV", "V"][Math.min(4, Math.floor(v / 20))]);
+const where = st => `${st.district}구 ${ZONES[st.zone]}`;
+
+function jobLabel(j) {
+  if (!j) return "없음";
+  switch (j.type) {
+    case "fixer": return j.color ? `특색 해결사 「${j.color}」` : `${j.grade}급 해결사`;
+    case "wing": return `${j.co} ${["사원", "주임", "팀장", "부장", "임원"][j.rank]}`;
+    case "synd": return `${j.name} ${["말단", "행동대원", "간부", "두목"][j.rank]}`;
+    case "finger": return `${j.name} ${["견습", "정식 단원", "중견", "간부"][j.rank]}`;
+    case "worker": return "공장 노동자";
+  }
+}
+function jobScore(j) {
+  if (!j) return 0;
+  if (j.type === "fixer") return j.color ? 100 : 10 + (10 - j.grade) * 8;
+  if (j.type === "wing") return 40 + j.rank * 12;
+  if (j.type === "finger") return 35 + j.rank * 15;
+  if (j.type === "synd") return 15 + j.rank * 10;
+  return 5;
+}
+function setJob(j) {
+  s.job = j;
+  if (j && jobScore(j) >= jobScore(s.bestJob)) s.bestJob = { ...j };
+}
+
+// ───────── 기록 ─────────
+function yearEntry() {
+  let y = s.log[s.log.length - 1];
+  if (!y || y.age !== s.age) { y = { age: s.age, e: [] }; s.log.push(y); }
+  return y;
+}
+function say(text, kind = "act", title) { if (text) yearEntry().e.push({ t: text, k: kind, h: title || null }); }
+function achieve(id) {
+  if (s.ach.includes(id)) return;
+  s.ach.push(id);
+  say(`업적 — ${ACH[id]}`, "good");
+}
+
+// ───────── 수치 변화 ─────────
+function gain(stat, n) { s[stat] = clamp(s[stat] + n, 0, 130); return n; }
+function heal(hp, sp) { s.hp = clamp(s.hp + (hp || 0), 0, 100); s.sp = clamp(s.sp + (sp || 0), 0, 100); }
+function hurt(n, cause) {
+  if (!s.alive) return;
+  s.hp = clamp(s.hp - n, 0, 100);
+  if (s.hp <= 0) die(cause);
+}
+function strain(n, cause) {
+  if (!s.alive) return;
+  s.sp = clamp(s.sp - n, 0, 100);
+  if (s.sp <= 0) {
+    if (chance(0.45)) {
+      die(cause ? `${cause} — 무너진 마음의 빈자리에서 다른 무언가가 태어났다. 왜곡되었다.` : "마음이 무너진 자리에서 다른 무언가가 태어났다. 왜곡되었다.");
+    } else {
+      s.sp = 15;
+      gain("prud", -4); gain("fort", -3);
+      say("정신이 바닥났지만 가까스로 자신을 붙잡았다. 무언가를 잃은 기분이다.", "bad");
+    }
+  }
+}
+function die(cause) {
+  s.alive = false;
+  s.cause = cause;
+  say(`${s.age}세, ${cause}`, "death");
+}
+
+// ───────── 행동 ─────────
+const ACTIONS = [
+  // 기본
+  { id: "play", g: "기본", label: "놀기", desc: "정신 회복, 작은 성장", cond: () => s.age < 8,
+    run() { heal(0, 15); const st = pick(VIRTUES); gain(st[0], 1); return `골목에서 뛰어놀았다. ${st[1]} +1`; } },
+  { id: "study", g: "기본", label: "공부", desc: "신중 ↑ · 정신 소모", cond: () => s.age >= 5,
+    run() { const n = gain("prud", rand(2, 5) + (s.zone === "nest" ? 2 : 0)); strain(rand(3, 8), "공부에 짓눌려"); return `책과 씨름했다. 신중 +${n}`; } },
+  { id: "train", g: "기본", label: "단련", desc: "용기·정의 ↑ · 체력 소모", cond: () => s.age >= 8,
+    run() { const a = gain("fort", rand(2, 5)), b = gain("just", rand(1, 3)); hurt(rand(4, 10), "무리한 단련으로"); return `몸을 혹사시켰다. 용기 +${a}, 정의 +${b}`; } },
+  { id: "rest", g: "기본", label: "휴식", desc: "체력·정신 회복", cond: () => s.age >= 6,
+    run() { heal(rand(15, 30), rand(15, 30)); return "아무것도 하지 않았다. 이 도시에선 그것도 사치다."; } },
+  { id: "labor", g: "기본", label: "잡일", desc: "돈 · 자제 ↑", cond: () => s.age >= 12 && !s.job,
+    run() { const m = rand(150, 500) + s.temp * 8; s.money += m; const n = gain("temp", rand(1, 3)); hurt(rand(2, 6), "잡일을 하다 사고로"); return `배달, 하역, 청소. ${fmt(m)}안을 벌었다. 자제 +${n}`; } },
+  { id: "social", g: "기본", label: "사람 만나기", desc: "인연 · 연애 · 결혼", cond: () => s.age >= 15, run: social },
+
+  // 진로
+  { id: "fixerLic", g: "진로", label: "해결사 자격 시험", desc: "협회 응시료 800안 · 용기·정의", cond: () => s.age >= 17 && !s.job, block: () => s.money < 800 && "응시료 800안 필요", run: fixerLicense },
+  { id: "wingExam", g: "진로", label: "날개 입사 시험", desc: "신중 높을수록 유리 · 둥지 출신 우대", cond: () => s.age >= 19 && !s.job, run: wingExam },
+  { id: "joinSynd", g: "진로", label: "조직 가입", desc: "뒷골목의 쉬운 길", cond: () => s.age >= 16 && !s.job && s.zone !== "nest", run: joinSynd },
+  { id: "joinFinger", g: "진로", label: "손가락 입문", desc: "위험하지만 강력한 집단", cond: () => s.age >= 18 && !s.job && s.zone === "back", run: joinFinger },
+  { id: "factory", g: "진로", label: "공장 취직", desc: "적은 월급, 적은 위험", cond: () => s.age >= 16 && !s.job,
+    run() { setJob({ type: "worker" }); return "공장에 들어갔다. 컨베이어 벨트는 쉬지 않는다."; } },
+
+  // 직업
+  { id: "commission", g: "일", label: "의뢰 수행", desc: "등급에 맞는 의뢰", cond: () => s.job?.type === "fixer", run: () => commission(false) },
+  { id: "bigCommission", g: "일", label: "고위험 의뢰", desc: "보수 2.5배, 위험도 그만큼", cond: () => s.job?.type === "fixer", run: () => commission(true) },
+  { id: "promotion", g: "일", label: "승급 심사", desc: "협회 심사 · 실적 필요", cond: () => s.job?.type === "fixer" && !s.job.color, block: promoBlock, run: promotion },
+  { id: "overtime", g: "일", label: "초과 근무", desc: "돈 ↑ · 정신 ↓", cond: () => s.job?.type === "wing" || s.job?.type === "worker", run: overtime },
+  { id: "wingPromo", g: "일", label: "승진 도전", desc: "신중·자제 · 실적", cond: () => s.job?.type === "wing" && s.job.rank < 4, run: wingPromo },
+  { id: "racket", g: "일", label: "구역 수금", desc: "돈 ↑ · 평판 ↓", cond: () => s.job?.type === "synd", run: racket },
+  { id: "fingerOp", g: "일", label: "지령 수행", desc: "큰 보상, 실패는 용서받지 못한다", cond: () => s.job?.type === "finger", run: fingerOp },
+  { id: "quit", g: "일", label: "일을 그만둔다", desc: "백수로 돌아간다", cond: () => !!s.job, run: quitJob },
+  { id: "retire", g: "일", label: "은퇴", desc: "모은 돈으로 여생을", cond: () => !!s.job && s.age >= 50,
+    run() { const old = jobLabel(s.job); setJob(null); s.retired = true; heal(10, 20); return `${old} 생활을 접었다. 손이 아직 기억하고 있다.`; } },
+
+  // 생활
+  { id: "augment", g: "생활", label: "의체 시술", desc: "돈으로 몸을 바꾼다", cond: () => s.age >= 16, block: () => s.money < 3000 && "최소 3,000안 필요", run: augment },
+  { id: "ampule", g: "생활", label: "K사 앰플", desc: "1,500안 · 체력 완전 회복 · 행동력 소모 없음", ap: 0, cond: () => s.age >= 10, block: () => (s.money < 1500 && "1,500안 필요") || (s.hp >= 100 && "이미 멀쩡하다"),
+    run() { s.money -= 1500; s.hp = 100; strain(2); return "앰플을 꽂았다. 살이 기어서 아문다."; } },
+  { id: "moveNest", g: "생활", label: "둥지로 이주", desc: "60,000안 · 안전한 삶", cond: () => s.zone !== "nest" && s.age >= 18, block: () => s.money < 60000 && "60,000안 필요",
+    run() { s.money -= 60000; s.zone = "nest"; achieve("nest"); heal(0, 20); return `${s.district}구의 둥지로 거처를 옮겼다. 새벽 3시가 더는 두렵지 않다.`; } },
+  { id: "moveBack", g: "생활", label: "뒷골목으로 이사", desc: "생활비 절약", cond: () => s.zone === "nest" && s.age >= 18,
+    run() { s.zone = "back"; return "둥지를 떠났다. 골목의 공기는 녹 냄새가 난다."; } },
+];
+
+function social() {
+  if (!s.partner) {
+    if (chance(0.3 + s.temp / 200)) {
+      s.partner = pick(NAMES.filter(n => n !== s.name)); s.love = 1;
+      heal(0, 10);
+      return `${s.partner}을(를) 만났다. 이 도시에도 따뜻한 것이 남아 있었다.`;
+    }
+    heal(0, 5);
+    return "사람들을 만났지만 특별한 인연은 없었다.";
+  }
+  if (!s.married) {
+    s.love++;
+    if (s.love >= 3 && chance(0.6)) { s.married = true; achieve("family"); heal(0, 20); return `${s.partner}와(과) 결혼했다. 작은 식이었지만 충분했다.`; }
+    heal(0, 10);
+    return `${s.partner}와(과) 시간을 보냈다.`;
+  }
+  heal(0, 12);
+  if (s.age < 50 && s.kids < 4 && chance(0.35)) { s.kids++; return `아이가 태어났다. ${s.kids}번째 아이다. 이 아이는 둥지에서 키우고 싶다.`; }
+  return `${s.partner}와(과) 조용한 저녁을 보냈다.`;
+}
+
+function fixerLicense() {
+  s.money -= 800;
+  const p = clamp(0.25 + (power(s) - 25) / 50, 0.1, 0.95);
+  if (chance(p)) {
+    setJob({ type: "fixer", grade: 9, exp: 0, color: null }); achieve("fixer");
+    return "협회 시험에 합격했다. 9급 해결사 면허증. 이제 돈을 받고 무엇이든 해결한다.";
+  }
+  hurt(rand(5, 15), "해결사 시험 실기 중");
+  return "실기 시험에서 떨어졌다. 대련 상대의 주먹이 아직 얼얼하다.";
+}
+function wingExam() {
+  const p = clamp(0.05 + (s.prud - 35) / 70 + (s.zone === "nest" ? 0.2 : 0), 0.02, 0.9);
+  strain(rand(5, 12), "입사 시험 압박에");
+  if (!s.alive) return "";
+  if (chance(p)) {
+    const w = pick(WINGS);
+    setJob({ type: "wing", co: w.co, rank: 0 }); achieve("wing");
+    return `${w.co}에 합격했다. ${w.flavor} 날개의 그늘 아래로 들어갔다.`;
+  }
+  return "불합격 통지를 받았다. 날개의 문은 좁다.";
+}
+function joinSynd() {
+  const name = pick(SYNDS);
+  setJob({ type: "synd", name, rank: 0 });
+  s.rep -= 5;
+  return `${name}에 들어갔다. 문신을 새기는 데 사흘이 걸렸다.`;
+}
+function joinFinger() {
+  const f = pick(FINGERS);
+  const p = clamp((power(s) - 30) / 60, 0.05, 0.8);
+  if (chance(p)) {
+    setJob({ type: "finger", name: f.name, rank: 0 }); achieve("finger");
+    return `${f.name}에 받아들여졌다. ${f.flavor}`;
+  }
+  hurt(rand(20, 45), `${f.name}의 입문 시험에서`);
+  return s.alive ? `${f.name}의 문을 두드렸지만 거절당했다. 대가로 몇 군데 뼈가 부러졌다.` : "";
+}
+
+function commission(big) {
+  const j = s.job;
+  const tier = j.color ? 11 : 10 - j.grade;
+  const diff = tier * 10 + 12 + (big ? 22 : 0);
+  const p = clamp(0.55 + (power(s) - diff) / 45, 0.07, 0.96);
+  const reward = Math.round(450 * Math.pow(tier, 1.55) * (big ? 2.5 : 1) * (0.8 + Math.random() * 0.4));
+  const kinds = ["실종자 수색", "조직 소탕", "호위", "채권 회수", "공방 경비", "뒷골목 괴담 조사", "도망자 추적"];
+  const what = pick(kinds);
+  if (chance(p)) {
+    s.money += reward; j.exp += big ? 2 : 1; s.rep += big ? 4 : 2;
+    gain("fort", rand(0, 2)); gain("just", rand(1, 2));
+    strain(rand(2, 8), "의뢰의 후유증으로");
+    return `${what} 의뢰를 완수했다. 보수 ${fmt(reward)}안.`;
+  }
+  hurt(rand(18, big ? 70 : 45), `${what} 의뢰에 실패하여`);
+  strain(rand(5, 12));
+  s.rep -= 1;
+  return s.alive ? `${what} 의뢰에 실패했다. 피를 흘리며 사무소로 기어 돌아왔다.` : "";
+}
+function promoBlock() {
+  const j = s.job; if (!j || j.type !== "fixer") return false;
+  const need = (10 - j.grade) * 2;
+  if (j.grade === 1) return (s.rep < 60 && "특색은 명성 60 이상") || (j.exp < 20 && "실적 20 필요");
+  return j.exp < need && `실적 ${need} 필요 (현재 ${j.exp})`;
+}
+function promotion() {
+  const j = s.job;
+  if (j.grade === 1) {
+    if (power(s) >= 85 && chance(0.5)) {
+      j.color = `${pick(COLOR_A)} ${pick(COLOR_B)}`; achieve("color"); s.rep += 20; setJob(j);
+      return `협회가 색을 부여했다. 이제 도시는 당신을 「${j.color}」라 부른다.`;
+    }
+    return "특색 심사에서 탈락했다. 색은 실력만으로 받는 것이 아니다.";
+  }
+  const p = clamp(0.35 + (power(s) - ((10 - j.grade) * 10 + 15)) / 40, 0.08, 0.92);
+  if (chance(p)) {
+    j.grade--; setJob(j);
+    if (j.grade === 1) achieve("grade1");
+    return `승급 심사 통과. ${j.grade}급 해결사가 되었다.`;
+  }
+  hurt(rand(8, 25), "승급 심사 대련에서");
+  return s.alive ? "승급 심사에서 떨어졌다." : "";
+}
+function overtime() {
+  const m = s.job.type === "wing" ? rand(3000, 6000) + s.job.rank * 2000 : rand(400, 900);
+  s.money += m;
+  strain(rand(10, 18), "과로로");
+  if (s.job.type === "wing") s.job.exp = (s.job.exp || 0) + 1;
+  if (s.job?.type === "wing" && s.job.co === "L사" && chance(0.15)) {
+    strain(rand(15, 30), "지하 시설의 무언가를 마주하고");
+    if (s.alive) return `야근 중 격리실 경보가 울렸다. 무엇을 봤는지 기억나지 않는다. 수당 ${fmt(m)}안.`;
+    return "";
+  }
+  return s.alive ? `밤늦게까지 일했다. 수당 ${fmt(m)}안.` : "";
+}
+function wingPromo() {
+  const j = s.job;
+  const p = clamp(0.2 + (s.prud + s.temp) / 250 + (j.exp || 0) * 0.04 - j.rank * 0.1, 0.05, 0.8);
+  if (chance(p)) { j.rank++; j.exp = 0; setJob(j); return `승진했다. 이제 ${jobLabel(j)}이다.`; }
+  strain(rand(5, 10));
+  return "승진 명단에 이름이 없었다.";
+}
+function racket() {
+  const m = rand(500, 1500) + s.job.rank * 1500;
+  s.money += m; s.rep -= 2;
+  if (chance(0.18)) {
+    hurt(rand(20, 55), "수금 중 해결사들에게 습격당해");
+    if (!s.alive) return "";
+    return `수금 도중 해결사들의 습격을 받았다. 겨우 살아남았다. ${fmt(m)}안은 챙겼다.`;
+  }
+  if (chance(0.25) && s.job.rank < 3) { s.job.rank++; setJob(s.job); return `상납을 착실히 바쳤다. ${jobLabel(s.job)}으로 올라섰다. ${fmt(m)}안.`; }
+  return `구역을 돌며 ${fmt(m)}안을 거뒀다.`;
+}
+function fingerOp() {
+  const j = s.job;
+  const p = clamp(0.5 + (power(s) - 40 - j.rank * 10) / 50, 0.1, 0.92);
+  const m = rand(3000, 7000) * (j.rank + 1);
+  if (chance(p)) {
+    s.money += m; gain("just", rand(1, 3));
+    strain(rand(6, 14), "지령의 무게에");
+    if (j.rank < 3 && chance(0.3)) { j.rank++; setJob(j); }
+    return s.alive ? `지령을 완수했다. ${fmt(m)}안. 지금은 ${jobLabel(j)}.` : "";
+  }
+  hurt(rand(35, 80), `${j.name}의 지령에 실패하여 처벌받아`);
+  return s.alive ? "지령에 실패했다. 손가락은 실패를 몸에 새긴다." : "";
+}
+function quitJob() {
+  const j = s.job;
+  if (j.type === "finger") {
+    setJob(null);
+    hurt(rand(40, 90), `${j.name}을(를) 떠나려다`);
+    return s.alive ? `${j.name}을(를) 떠났다. 손가락 하나를 두고 나왔다.` : "";
+  }
+  const old = jobLabel(j);
+  setJob(null);
+  return `${old} 일을 그만뒀다.`;
+}
+
+function augment() {
+  return {
+    title: "의체 공방",
+    text: "녹슨 간판 아래 공방. 기술자가 카탈로그를 내민다.\n\"어디를 바꿔 드릴까. 돈만 있으면 뭐든 됩니다.\"",
+    choices: [
+      { label: "중고 팔 (3,000안)", sub: "용기 +6 · 정신 -8", cond: () => s.money >= 3000,
+        run() { s.money -= 3000; s.aug++; gain("fort", 6); strain(8, "의체 거부 반응으로"); return "중고 의수를 달았다. 전 주인의 버릇이 남아 있다."; } },
+      { label: "반사 신경 칩 (8,000안)", sub: "정의 +10 · 정신 -10", cond: () => s.money >= 8000,
+        run() { s.money -= 8000; s.aug++; gain("just", 10); strain(10, "신경 칩 부작용으로"); return "척추에 칩을 심었다. 세상이 조금 느리게 보인다."; } },
+      { label: "전신 개조 (40,000안)", sub: "용기·정의 +18 · 정신 -20", cond: () => s.money >= 40000,
+        run() { s.money -= 40000; s.aug += 3; gain("fort", 18); gain("just", 18); strain(20, "전신 개조의 충격으로"); if (s.aug >= 5) achieve("aug"); return s.alive ? "몸의 절반 이상이 금속이 되었다. 거울 속 얼굴이 낯설다." : ""; } },
+      { label: "그냥 나간다", run: () => "카탈로그를 덮고 공방을 나왔다." },
+    ],
+  };
+}
+
+// ───────── 연간 이벤트 ─────────
+const EVENTS = [
+  { id: "night", w: () => (s.zone === "back" && s.age >= 7 ? 5 : 0), run: () => ({
+    title: "뒷골목의 밤",
+    text: `${s.age < 15 ? "심부름을 갔다 오는 길이 늦어졌다." : "일이 늦게 끝났다."} 시계가 새벽 3시 10분을 향해 간다.\n이 시간, 거리에 남은 것은 무엇이든 청소부의 몫이 된다. 멀리서 무언가 끌리는 소리가 들린다.`,
+    choices: [
+      { label: "가장 가까운 문을 두드린다", sub: "자제", run() {
+        if (chance(0.5 + s.temp / 200)) { gain("temp", 2); return "누군가 말없이 문을 열어 주었다. 3시 20분이 지날 때까지 숨을 죽였다."; }
+        hurt(rand(30, 60), "뒷골목의 밤, 청소부에게 붙잡혀");
+        return s.alive ? "아무도 문을 열지 않았다. 골목 끝에서 다가온 것을 피하다 크게 다쳤다." : ""; } },
+      { label: "집까지 전력으로 달린다", sub: "용기", run() {
+        if (chance(0.35 + s.fort / 140)) { gain("fort", 2); return "심장이 터질 듯 달렸다. 문을 잠근 순간 바깥에서 액체 끓는 소리가 났다."; }
+        hurt(rand(40, 85), "뒷골목의 밤, 청소부에게 따라잡혀");
+        return s.alive ? "등 뒤에서 무언가가 스쳤다. 살아서 집에 닿은 게 기적이다." : ""; } },
+      { label: "맞서 싸운다", sub: "전투력 40 이상", cond: () => power(s) >= 40, run() {
+        if (chance(clamp(0.25 + (power(s) - 40) / 60, 0.1, 0.9))) { s.rep += 10; gain("just", 3); achieve("night"); return "청소부 하나를 베어 넘겼다. 나머지는 물러갔다. 소문이 돌 것이다."; }
+        hurt(rand(55, 95), "청소부와 맞서 싸우다");
+        return s.alive ? "칼날이 무뎌질 때까지 싸웠다. 이길 수 있는 상대가 아니었다." : ""; } },
+    ] }) },
+
+  { id: "rats", w: () => (s.zone !== "nest" && s.age >= 10 && s.age <= 40 ? 3 : 0), run: () => ({
+    title: "쥐 떼",
+    text: "골목 어귀에서 쥐들이 길을 막았다. 뒷골목 밑바닥에서 남의 것을 뜯어 사는 무리다.\n\"가진 거 다 내놔.\"",
+    choices: [
+      { label: `돈을 내준다 (${fmt(Math.max(0, Math.floor(s.money * 0.3)))}안)`, run() { const m = Math.max(0, Math.floor(s.money * 0.3)); s.money -= m; strain(5); return "가진 것을 털렸다. 그래도 목숨은 붙어 있다."; } },
+      { label: "싸운다", sub: "전투력", run() {
+        if (chance(clamp(0.3 + (power(s) - 15) / 50, 0.1, 0.95))) { gain("fort", 3); s.money += rand(50, 400); return "쥐들을 쫓아냈다. 놈들이 흘린 돈도 챙겼다."; }
+        hurt(rand(20, 45), "쥐 떼에게 둘러싸여");
+        return s.alive ? "흠씬 두들겨 맞고 주머니까지 털렸다." : ""; } },
+    ] }) },
+
+  { id: "fingerTax", w: () => (s.zone === "back" && s.age >= 20 && s.money > 2000 && s.job?.type !== "finger" ? 2 : 0), run: () => ({
+    title: "손가락의 상납",
+    text: "이 구역을 쥔 손가락의 단원이 찾아왔다. 정중한 말투였지만 눈은 웃고 있지 않았다.\n\"올해 몫을 받으러 왔습니다.\"",
+    choices: [
+      { label: `낸다 (${fmt(Math.floor(s.money * 0.2))}안)`, run() { s.money -= Math.floor(s.money * 0.2); return "돈을 건넸다. 그는 고개를 까딱하고 사라졌다."; } },
+      { label: "거절한다", sub: "정의 · 큰 위험", run() {
+        gain("just", 4);
+        if (chance(clamp((power(s) - 45) / 50, 0.05, 0.85))) { s.rep += 8; return "그를 돌려보냈다. 언젠가 대가가 돌아올 것이다."; }
+        hurt(rand(40, 80), "손가락의 상납을 거절했다가");
+        return s.alive ? "다음 날 밤 그들이 다시 왔다. 손가락 두 마디를 잃었다." : ""; } },
+    ] }) },
+
+  { id: "taboo", w: () => (s.age >= 22 && s.prud >= 40 && !s.taboo ? 1.2 : 0), run: () => ({
+    title: "수상한 연구 제안",
+    text: "익명의 후원자가 연구를 제안했다. 보수는 평생 만져 볼 수 없는 금액이다.\n주제를 들은 순간 등줄기가 서늘해졌다. 머리가 금기로 정한 영역이다.",
+    choices: [
+      { label: "받아들인다 (+60,000안)", sub: "금기 위반", run() { s.money += 60000; s.taboo = 1; achieve("taboo"); gain("prud", 6); return "연구에 손을 댔다. 돈은 들어왔다. 그날 이후 누군가 지켜보는 기분이 사라지지 않는다."; } },
+      { label: "거절하고 잊는다", run() { gain("temp", 3); return "제안서를 태웠다. 현명한 선택이었다."; } },
+    ] }) },
+
+  { id: "library", w: () => (s.age >= 20 ? (s.job?.type === "fixer" || s.job?.type === "finger" ? 1.5 : 0.7) : 0), run: () => ({
+    title: "도서관의 초대장",
+    text: "문틈으로 초대장 한 장이 들어왔다. 어젯밤까지 없던 거대한 건물이 거리 한복판에 서 있다고 한다.\n'원하는 책을 얻을 기회를 드립니다. 대가는, 당신이 질 경우의 당신입니다.'",
+    choices: [
+      { label: "초대에 응한다", sub: "전투력 · 생사", run() {
+        if (chance(clamp(0.2 + (power(s) - 40) / 70, 0.05, 0.85))) {
+          const m = rand(20000, 60000); s.money += m; gain(pick(VIRTUES)[0], 10); achieve("library");
+          return `접대를 이겨냈다. 손에 쥔 책 한 권에서 누군가의 일생이 흘러들어 왔다. 그것을 팔아 ${fmt(m)}안을 얻었다.`;
+        }
+        die("도서관의 접대에서 패배해 한 권의 책이 되었다");
+        return ""; } },
+      { label: "초대장을 찢는다", run() { return "초대장을 찢었다. 며칠 뒤 그 건물로 들어간 사람들 중 아무도 돌아오지 않았다는 소문을 들었다."; } },
+    ] }) },
+
+  { id: "kitchen", w: () => (s.zone === "back" && s.age >= 15 ? 1.2 : 0), run: () => ({
+    title: "골목 끝의 식당",
+    text: "값이 터무니없이 싸고 고기가 넘치는 식당이 생겼다. 근처에서 사람이 사라진다는 이야기와 개업 시기가 묘하게 겹친다.",
+    choices: [
+      { label: "먹는다", run() { if (chance(0.7)) { heal(20, -8); return "맛있었다. 무슨 고기인지 묻지 않았다."; } strain(25, "식당의 진실을 알아 버려"); return s.alive ? "주방 뒷문을 잘못 열었다. 그 뒤로 고기를 먹지 못한다." : ""; } },
+      { label: "피한다", run() { gain("prud", 2); return "그 골목으로는 다니지 않기로 했다."; } },
+    ] }) },
+
+  { id: "scout", w: () => (!s.job && s.age >= 18 && power(s) >= 35 ? 2 : 0), run: () => ({
+    title: "사무소의 제안",
+    text: "작은 해결사 사무소의 소장이 찾아왔다. 당신이 골목에서 싸우는 걸 봤다고 한다.\n\"면허 비용은 우리가 대지. 같이 일해 볼 생각 있나?\"",
+    choices: [
+      { label: "받아들인다", run() { setJob({ type: "fixer", grade: 9, exp: 0, color: null }); achieve("fixer"); return "사무소에 들어갔다. 소장은 커피를 지독하게 못 탄다."; } },
+      { label: "거절한다", run: () => "정중히 거절했다." },
+    ] }) },
+
+  { id: "wingFall", w: () => (s.job?.type === "wing" ? 0.6 : 0), run() {
+    const co = s.job.co; setJob(null);
+    hurt(rand(10, 50), `${co}의 몰락에 휘말려`);
+    strain(20);
+    return { title: "날개의 추락", text: s.alive ? `${co}가 하룻밤 사이에 무너졌다. 특이점을 다른 날개에 빼앗겼다는 소문이다. 직장을 잃었고, 그 구 전체가 뒷골목처럼 변했다.` : "" };
+  } },
+
+  { id: "distortion", w: () => (s.age >= 25 ? 0.8 : 0), run() {
+    if (s.sp < 30 && chance(0.5)) { die("왜곡 현상에 삼켜져 사람이 아닌 무언가가 되었다"); return { title: "왜곡", text: "" }; }
+    strain(rand(12, 25), "왜곡체를 목격하고");
+    return { title: "왜곡 현상", text: s.alive ? "거리 한복판에서 사람이 괴물로 변하는 것을 보았다. 그 사람은 마지막까지 누군가의 이름을 부르고 있었다." : "" };
+  } },
+
+  { id: "luck", w: () => (s.age >= 8 ? 1.5 : 0), run() { const m = rand(200, 3000); s.money += m; return { title: "횡재", text: `하수구 철망 사이에서 주인 없는 돈뭉치를 주웠다. ${fmt(m)}안.` }; } },
+  { id: "sick", w: () => (s.age >= 35 ? 1 + s.age / 30 : 0.3), run() { hurt(rand(8, 25), "병으로"); return { title: "병치레", text: s.alive ? "한 해 내내 기침을 달고 살았다." : "" }; } },
+  { id: "friend", w: () => (s.age >= 6 && s.age <= 30 ? 1.5 : 0), run() { heal(0, 15); gain("temp", 2); return { title: "친구", text: `${pick(NAMES)}라는 친구가 생겼다. 같이 웃을 일이 늘었다.` }; } },
+  { id: "parentDeath", w: () => (s.parents > 0 && s.age >= 12 ? (s.zone === "back" ? 0.9 : 0.4) + s.age / 60 : 0), run() {
+    s.parents--; strain(rand(15, 30), "가족을 잃은 슬픔에");
+    return { title: "작별", text: s.alive ? `${s.parents === 0 ? "남은 부모님마저" : "부모님 한 분이"} 세상을 떠났다. ${s.zone === "back" ? "뒷골목에선 장례도 사치였다." : "조용한 장례를 치렀다."}` : "" };
+  } },
+  { id: "partnerLoss", w: () => (s.partner && s.zone !== "nest" ? 0.4 : 0), run() {
+    const p = s.partner; s.partner = null; s.married = false; s.love = 0;
+    strain(rand(25, 40), "사랑하는 이를 잃고");
+    return { title: "빈자리", text: s.alive ? `${p}이(가) 돌아오지 않았다. 새벽 3시 10분, 그날따라 귀가가 늦었다.` : "" };
+  } },
+  { id: "train", w: () => (s.age >= 18 && s.money >= 2000 ? 0.7 : 0), run: () => ({
+    title: "W사 열차",
+    text: "다른 구로 가는 W사 워프 열차 표가 생겼다. 몇 초면 도착한다고 한다. 그 몇 초가 승객에게는 훨씬 길게 느껴질 때가 있다는 소문도 있다.",
+    choices: [
+      { label: "탄다 (2,000안)", run() { s.money -= 2000; if (chance(0.85)) { heal(0, 15); const m = rand(1000, 5000); s.money += m; return `다른 구에서 일거리를 찾아 ${fmt(m)}안을 벌어 왔다.`; } strain(rand(30, 50), "워프 열차 안에서"); return s.alive ? "열차 안에서 몇 초가 지났다. 아니, 몇 년이었을지도 모른다. 내릴 때 머리가 하얗게 셌다." : ""; } },
+      { label: "타지 않는다", run: () => "표를 되팔았다." },
+    ] }) },
+  { id: "nestCheck", w: () => (s.zone === "nest" && s.age >= 18 ? 1 : 0), run() { const m = rand(500, 2500); s.money -= m; return { title: "둥지 검문", text: `둥지 관리국의 정기 감사. 이것저것 명목으로 ${fmt(m)}안이 빠져나갔다.` }; } },
+];
+
+function weighted(list) {
+  const ws = list.map(e => Math.max(0, e.w()));
+  const total = ws.reduce((a, b) => a + b, 0);
+  if (total <= 0) return null;
+  let r = Math.random() * total;
+  for (let i = 0; i < list.length; i++) { r -= ws[i]; if (r <= 0) return list[i]; }
+  return list[list.length - 1];
+}
+
+// 나이에 따른 고정 사건
+function milestones() {
+  const out = [];
+  const m = (title, text, fn) => out.push({ run() { if (fn) fn(); return { title, text }; } });
+  if (s.age === 1) m("첫걸음", s.zone === "nest" ? "깨끗한 바닥 위에서 첫걸음을 뗐다." : "녹슨 철판 위에서 첫걸음을 뗐다.");
+  if (s.age === 6) {
+    if (s.zone === "nest") m("입학", "둥지의 학교에 들어갔다. 날개 입사를 목표로 하는 아이들 사이에서.", () => gain("prud", 4));
+    else m("골목의 학교", "학교는 없었다. 대신 골목이 가르쳐 주었다. 3시 10분 전에는 집에 들어가야 한다는 것을.", () => gain("temp", 3));
+  }
+  if (s.age === 13 && s.zone !== "nest") m("일을 배우다", "또래들이 하나둘 일을 시작했다. 누군가는 공방으로, 누군가는 조직으로.");
+  if (s.age === 18) {
+    const gift = s.zone === "nest" ? rand(8000, 20000) : rand(0, 600);
+    m("성인", `성인이 되었다. 가족이 ${gift ? fmt(gift) + "안을 쥐여 주었다." : "줄 수 있는 건 없었다. 괜찮다."}`, () => { s.money += gift; });
+  }
+  if (s.age === 40) m("마흔", "거울 속에 부모님의 얼굴이 보이기 시작했다.");
+  return out;
+}
+
+// ───────── 한 해 보내기 ─────────
+function passive() {
+  const j = s.job;
+  let income = 0;
+  if (j?.type === "wing") income = 9000 + j.rank * 5000 + s.prud * 40;
+  else if (j?.type === "worker") income = 1600 + s.temp * 20;
+  else if (j?.type === "synd") income = 800 + j.rank * 1200;
+  else if (j?.type === "finger") income = 2000 + j.rank * 3500;
+  if (income) { s.money += income; say(`${jobLabel(j)} 수입 ${fmt(income)}안.`, "act"); }
+  if (s.age >= 18) {
+    const cost = ({ nest: 5000, back: 700, out: 250 })[s.zone] + s.kids * (s.zone === "nest" ? 1500 : 300);
+    s.money -= cost;
+  }
+  if (s.money < -3000) {
+    hurt(rand(15, 35), "빚 수금업자에게 끌려가");
+    s.money = -800;
+    if (s.alive) say("빚쟁이들이 찾아왔다. 돈 대신 다른 것을 가져갔다.", "bad");
+  }
+  if (s.money >= 1000000) achieve("rich");
+  // 자연 회복과 노화
+  heal(s.age < 40 ? 12 : 6, 8);
+  if (s.age >= 45) { gain("fort", -1); hurt(rand(1, 4) + Math.floor((s.age - 45) / 6), "노쇠하여"); }
+  if (s.taboo && s.alive && chance(0.35)) {
+    if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
+    else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다");
+  }
+  if (s.alive && s.age >= 58 && chance((s.age - 55) * 0.016 + (s.zone === "back" ? 0.02 : 0))) {
+    achieve("oldage");
+    die("노환으로 잠든 채 세상을 떠났다. 이 도시에서 드문 죽음이다");
+  }
+}
+
+function advanceYear() {
+  if (!s || !s.alive || modalOpen) return;
+  s.age++;
+  s.ap = apFor(s);
+  yearEntry();
+  passive();
+  if (!s.alive) return finish();
+  queue = milestones();
+  if (s.age >= 4) {
+    const n = s.age < 12 ? 1 : chance(0.55) ? 2 : 1;
+    const used = new Set();
+    for (let i = 0; i < n; i++) {
+      const ev = weighted(EVENTS.filter(e => !used.has(e.id)));
+      if (ev) { used.add(ev.id); queue.push(ev); }
+    }
+  }
+  processQueue();
+}
+
+function processQueue() {
+  if (!s.alive) return finish();
+  const ev = queue.shift();
+  if (!ev) { save(); render(); return; }
+  const res = ev.run();
+  if (!res) return processQueue();
+  if (res.choices) {
+    showChoice(res, text => { say(text, "event", res.title); processQueue(); });
+  } else {
+    say(res.text, "event", res.title);
+    processQueue();
+  }
+}
+
+function doAction(a) {
+  if (!s.alive || modalOpen) return;
+  const cost = a.ap ?? 1;
+  if (s.ap < cost) return;
+  s.ap -= cost;
+  yearEntry();
+  const res = a.run();
+  if (res && typeof res === "object") {
+    showChoice(res, text => { say(text, "act"); afterAction(); });
+    return;
+  }
+  say(res, "act");
+  afterAction();
+}
+function afterAction() {
+  if (!s.alive) return finish();
+  save(); render();
+}
+
+function finish() {
+  modalOpen = false;
+  $("#modalRoot").innerHTML = "";
+  const graves = store.get(GRAVE_KEY) || [];
+  graves.unshift({ name: s.name, age: s.age, where: where(s), job: jobLabel(s.bestJob), cause: s.cause });
+  store.set(GRAVE_KEY, graves.slice(0, 12));
+  store.del(SAVE_KEY);
+  render();
+}
+
+// ───────── 렌더링 ─────────
+function save() { if (s && s.alive) store.set(SAVE_KEY, s); }
+
+function showChoice(res, done) {
+  modalOpen = true;
+  const opts = res.choices.filter(c => !c.cond || c.cond());
+  $("#modalRoot").innerHTML = `
+    <div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+      <div class="modal card">
+        <div class="eyebrow">${s.age}세 · ${esc(where(s))}</div>
+        <h3 id="mTitle">${esc(res.title)}</h3>
+        <p>${esc(res.text)}</p>
+        <div class="choices">${opts.map((c, i) => `<button class="btn" id="choice-${i}" data-i="${i}">${esc(c.label)}${c.sub ? `<small>${esc(c.sub)}</small>` : ""}</button>`).join("")}</div>
+      </div>
+    </div>`;
+  $("#modalRoot").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    const c = opts[+b.dataset.i];
+    modalOpen = false;
+    $("#modalRoot").innerHTML = "";
+    done(c.run());
+  }));
+  $("#choice-0")?.focus();
+}
+
+function bar(label, v, color) {
+  return `<div class="bar"><div class="bar-head"><span>${label}</span><span>${Math.round(v)} / 100</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:${clamp(v, 0, 100)}%;background:${color}"></div></div></div>`;
+}
+
+function renderSheet() {
+  const fam = [
+    s.parents ? `부모 ${s.parents}` : "부모 없음",
+    s.partner ? (s.married ? `배우자 ${s.partner}` : `연인 ${s.partner}`) : null,
+    s.kids ? `자녀 ${s.kids}` : null,
+  ].filter(Boolean).join(" · ");
+  return `
+  <aside class="sheet card">
+    <div class="who">
+      <div class="eyebrow">시민 기록</div>
+      <h2>${esc(s.name)}</h2>
+      <div class="meta">${s.age}세 · ${esc(where(s))}</div>
+    </div>
+    ${bar("체력", s.hp, "var(--blood)")}
+    ${bar("정신력", s.sp, "var(--mind)")}
+    <div class="virtues">${VIRTUES.map(([k, n]) => `<div class="virtue"><span class="name">${n}</span><span class="rank">${rankOf(s[k])}</span><span class="num">${Math.round(s[k])}</span></div>`).join("")}</div>
+    <dl class="kv">
+      <dt>소지금</dt><dd class="money">${fmt(s.money)}안</dd>
+      <dt>직업</dt><dd>${esc(jobLabel(s.job))}</dd>
+      ${s.job?.type === "fixer" ? `<dt>실적</dt><dd>${s.job.exp}</dd>` : ""}
+      <dt>명성</dt><dd>${s.rep}</dd>
+      <dt>전투력</dt><dd>${Math.round(power(s))}</dd>
+      <dt>의체</dt><dd>${s.aug}</dd>
+      <dt>가족</dt><dd>${esc(fam)}</dd>
+    </dl>
+    ${s.ach.length || s.taboo ? `<div class="chips">${s.taboo ? `<span class="chip warn">발톱의 주시</span>` : ""}${s.ach.map(a => `<span class="chip">${ACH[a]}</span>`).join("")}</div>` : ""}
+  </aside>`;
+}
+
+function renderActions() {
+  const groups = ["기본", "진로", "일", "생활"];
+  return groups.map(g => {
+    const list = ACTIONS.filter(a => a.g === g && a.cond());
+    if (!list.length) return "";
+    return `<div><div class="group-title">${g}</div><div class="acts">${list.map(a => {
+      const blocked = (a.block && a.block()) || ((a.ap ?? 1) > s.ap && "이번 해의 행동력을 다 썼다");
+      return `<button class="btn act" id="act-${a.id}" data-id="${a.id}" ${blocked ? "disabled" : ""}><b>${a.label}</b><small>${esc(blocked || a.desc)}</small></button>`;
+    }).join("")}</div></div>`;
+  }).join("");
+}
+
+function renderLog() {
+  return s.log.slice().reverse().slice(0, 60).map(y => `
+    <div class="year"><div class="age">${y.age}<small>세</small></div>
+      <div class="entries">${y.e.length ? y.e.map(e => `<p class="k-${e.k}">${e.h ? `<b>${esc(e.h)}</b>` : ""}${esc(e.t)}</p>`).join("") : `<p class="k-act">조용한 한 해였다.</p>`}</div>
+    </div>`).join("");
+}
+
+function render() {
+  const top = $("#topActions");
+  if (!s) { top.innerHTML = ""; return renderIntro(); }
+  top.innerHTML = s.alive ? `<button class="btn ghost danger" id="restart">새 인생</button>` : "";
+  $("#restart")?.addEventListener("click", confirmRestart);
+  if (!s.alive) return renderEnding();
+  $("#screen").innerHTML = `
+    <div class="game">
+      ${renderSheet()}
+      <div class="main">
+        <section class="panel card">
+          <div class="panel-head"><h3>올해 무엇을 할까</h3><span class="ap">행동력 <b>${s.ap}</b> / ${apFor(s)}</span></div>
+          <div class="groups">${renderActions()}</div>
+          <button class="btn primary advance" id="advance">한 해를 보낸다 → ${s.age + 1}세</button>
+        </section>
+        <section class="card">
+          <div class="panel" style="padding-bottom:0"><div class="panel-head"><h3>연대기</h3><span class="ap">${esc(where(s))}</span></div></div>
+          <div class="log">${renderLog()}</div>
+        </section>
+      </div>
+    </div>`;
+  $("#screen").querySelectorAll(".act").forEach(b => b.addEventListener("click", () => doAction(ACTIONS.find(a => a.id === b.dataset.id))));
+  $("#advance").addEventListener("click", advanceYear);
+}
+
+function confirmRestart() {
+  showChoice({ title: "새 인생을 시작할까", text: "지금의 삶은 기록되지 않고 사라진다.", choices: [
+    { label: "다시 태어난다", run() { store.del(SAVE_KEY); s = null; render(); return null; } },
+    { label: "계속 산다", run: () => null },
+  ] }, () => { if (s) render(); });
+}
+
+function renderIntro() {
+  const graves = store.get(GRAVE_KEY) || [];
+  $("#screen").innerHTML = `
+    <div class="intro">
+      <section class="card">
+        <div class="eyebrow">태어날 준비</div>
+        <h2>도시에 태어난다는 것</h2>
+        <p>머리가 금기를 정하고, 날개가 특이점으로 구를 먹여 살리고, 그 바깥 뒷골목에서는 새벽 3시 10분마다 청소부가 거리를 쓸어 간다.</p>
+        <p>태어날 구와 집안은 고를 수 없다. 해마다 무엇을 할지 정하고, 찾아오는 사건 앞에서 선택하라. 해결사가 되어 색을 얻을 수도, 날개의 사원이 될 수도, 골목에서 이름 없이 사라질 수도 있다.</p>
+        <div class="field">
+          <label for="nameInput">이름</label>
+          <div class="field-row">
+            <input id="nameInput" maxlength="12" value="${esc(pick(NAMES))}">
+            <button class="btn" id="randName">무작위</button>
+          </div>
+        </div>
+        <button class="btn primary advance" id="born">태어난다</button>
+      </section>
+      <section class="card" style="padding:22px">
+        <div class="eyebrow">지난 생의 묘비</div>
+        <h2 style="font-size:22px">${graves.length ? "먼저 간 사람들" : "아직 묘비가 없다"}</h2>
+        <div class="graves">${graves.length ? graves.map(g => `<div class="grave"><b>${esc(g.name)}</b> · ${g.age}세 · ${esc(g.job)}<span>${esc(g.where)} — ${esc(g.cause)}</span></div>`).join("")
+          : `<p>한 생을 마치면 여기에 이름이 남는다. 도시에서 묘비를 가진다는 것만으로도 운이 좋은 편이다.</p>
+             <div class="grave"><b>예시) 로웰</b> · 34세 · 4급 해결사<span>14구 뒷골목 — 조직 소탕 의뢰에 실패하여</span></div>`}</div>
+      </section>
+    </div>`;
+  $("#randName").addEventListener("click", () => { $("#nameInput").value = pick(NAMES); });
+  $("#born").addEventListener("click", () => {
+    s = newLife($("#nameInput").value.trim());
+    s.ap = apFor(s);
+    say(`${where(s)}에서 태어났다. ${s.zone === "nest" ? "날개의 보호 아래, 비교적 운이 좋은 출발이다." : s.zone === "back" ? "뒷골목의 낡은 방 한 칸. 흔한 시작이다." : "도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다."}`, "event", "탄생");
+    save(); render();
+  });
+}
+
+function renderEnding() {
+  const ep = s.age < 12 ? "너무 일찍 꺼진 등불." : s.ach.includes("color") ? "도시는 그 색을 오래 기억할 것이다." : s.ach.includes("oldage") ? "끝까지 살아남았다. 그것이 이 도시에서 가장 어려운 일이다." : s.kids ? `${s.kids}명의 아이가 그 이름을 이어 간다.` : "이름은 곧 골목의 소음에 묻힐 것이다.";
+  $("#screen").innerHTML = `
+    <div class="game">
+      ${renderSheet()}
+      <div class="main">
+        <section class="ending card">
+          <div class="eyebrow">생애 종료</div>
+          <h2>${esc(s.name)}, ${s.age}세</h2>
+          <p class="epitaph">${esc(s.cause)}.<br>${esc(ep)}</p>
+          <dl class="kv" style="max-width:360px">
+            <dt>최고 경력</dt><dd>${esc(jobLabel(s.bestJob))}</dd>
+            <dt>남긴 돈</dt><dd class="money">${fmt(s.money)}안</dd>
+            <dt>업적</dt><dd>${s.ach.length}개</dd>
+          </dl>
+          <button class="btn primary advance" id="again">다시 태어난다</button>
+        </section>
+        <section class="card"><div class="panel" style="padding-bottom:0"><div class="panel-head"><h3>연대기</h3></div></div><div class="log">${renderLog()}</div></section>
+      </div>
+    </div>`;
+  $("#again").addEventListener("click", () => { s = null; render(); });
+}
+
+// ───────── 시작 ─────────
+function start(hot) {
+  s = (hot && hot.s) || store.get(SAVE_KEY);
+  if (s && !s.alive) s = null;
+  render();
+}
+window.claude?.hot?.snapshot?.(() => ({ s }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
