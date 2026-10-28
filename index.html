@@ -351,6 +351,8 @@ function newLife(name, gender, origin) {
     wingCo: zone === "wing" ? pick(WINGS).co : null,
     spider: zone === "spider" ? { abi: ["뤼엔", "발렌치나", "마티아스", "칼리스토", "요루"], escaped: false, teach: {} } : null,
     hFamily: zone === "hcorp" && chance(0.4) ? pick(H_FAMILIES) : null,
+    // 별호는 태어날 때 정해진다. 소지에 들어가면 그 별로 불린다.
+    birthStar: (r => (r < 0.03 ? { tier: "tiangang", name: pick(TIANGANG) } : r < 0.1 ? { tier: "disha", name: pick(DISHA) } : null))(Math.random()),
     hp: 100, sp: 100,
     fort: rand(base, base + 8), prud: rand(base, base + 8), temp: rand(base, base + 8), just: rand(base, base + 8),
     money: 0, rep: 0,
@@ -410,6 +412,7 @@ function jobScore(j) {
   return { claw: 120, hlord: 110, hhead: 70 }[j.type] ?? (j.type === "tabooHunter" ? 30 + j.rank * 15 : ["heishou", "sailor", "pirate"].includes(j.type) ? 12 + j.rank * 12 : 5);
 }
 function setJob(j) {
+  if (j?.type === "finger" && j.name === "소지" && s.birthStar && !j.star) j.star = { ...s.birthStar };
   s.job = j;
   if (j && jobScore(j) >= jobScore(s.bestJob)) s.bestJob = { ...j };
 }
@@ -645,9 +648,9 @@ const ACTIONS = [
   { id: "fixerLic", g: "진로", label: "해결사 자격 시험", desc: "협회 응시료 800안 · 용기·정의", cond: () => s.age >= 17 && !s.job, block: () => s.money < 800 && "응시료 800안 필요", run: fixerLicense },
   { id: "wingExam", g: "진로", label: "날개 입사 시험", desc: "신중 높을수록 유리 · 둥지 출신 우대", cond: () => s.age >= 19 && !s.job, run: wingExam },
   { id: "joinSynd", g: "진로", label: "조직 가입", desc: "뒷골목의 쉬운 길", cond: () => s.age >= 16 && !s.job && streetLike(s), run: joinSynd },
-  { id: "joinPinky", g: "진로", label: "소지 입문", desc: "별호를 다투는 손가락", cond: () => s.age >= 18 && !s.job && (s.zone === "back" || s.zone === "hcorp"),
+  { id: "joinPinky", g: "진로", label: "소지 입문", desc: "별로 이름을 부르는 손가락", cond: () => s.age >= 18 && !s.job && (s.zone === "back" || s.zone === "hcorp"),
     run() {
-      if (chance(clamp((power(s) - 30) / 60, 0.05, 0.8))) { setJob({ type: "finger", name: "소지", rank: 0, exp: 0 }); achieve("finger"); return "소지에 받아들여졌다. 두목이 말했다. 이곳에서 이름은 별로 부른다고. 하늘의 별 32개, 땅의 별 72개. 아직 너에게는 별이 없다."; }
+      if (chance(clamp((power(s) - 30) / 60, 0.05, 0.8))) { setJob({ type: "finger", name: "소지", rank: 0, exp: 0 }); achieve("finger"); return s.job.star ? `소지에 받아들여졌다. 그들은 처음부터 너를 알고 있었다. 태어날 때부터 정해진 별, ${STAR_TIER[s.job.star.tier]}의 ${s.job.star.name}. 오늘부터 그 이름으로 불린다.` : "소지에 받아들여졌다. 이곳에서는 사람을 별로 부른다. 하늘의 별 32개, 땅의 별 72개. 별은 태어날 때 정해지는 것이고, 너에게는 별이 없다."; }
       hurt(rand(20, 45), "소지의 입문 시험에서");
       return s.alive ? "소지의 문을 두드렸지만 거절당했다. 대가로 몇 군데 뼈가 부러졌다." : "";
     } },
@@ -674,7 +677,6 @@ const ACTIONS = [
   { id: "overtime", g: "일", label: "초과 근무", desc: "돈 ↑ · 정신 ↓", cond: () => s.job?.type === "wing" || s.job?.type === "worker", run: overtime },
   { id: "wingPromo", g: "일", label: "승진 도전", desc: "신중·자제 · 실적", cond: () => s.job?.type === "wing" && s.job.rank < 4, run: wingPromo },
   { id: "racket", g: "일", label: "구역 수금", desc: "돈 ↑ · 평판 ↓", cond: () => s.job?.type === "synd", run: racket },
-  { id: "starDuel", g: "일", label: "별호 쟁탈", desc: "별을 가진 자와 결투 · 지면 별을 잃을 수도", cond: () => isPinky() && s.job.star?.tier !== "tiangang", block: () => !s.job.star && (s.job.exp || 0) < 3 && `지령 실적 3 필요 (현재 ${s.job.exp || 0})`, run: starDuel },
   { id: "fingerOp", g: "일", label: "지령 수행", desc: "큰 보상, 실패는 용서받지 못한다", cond: () => s.job?.type === "finger", run: fingerOp },
   { id: "heishouWork", g: "일", label: "흑수의 일", desc: "다른 지파와의 다툼 · 전투", cond: () => s.job?.type === "heishou", run: heishouWork },
   { id: "heirDuel", g: "일", label: "후계 결투", desc: "경쟁 후보와 결투 · 3승하면 가주", cond: () => s.heir && !s.heir.head, run: heirDuel },
@@ -1448,16 +1450,19 @@ const EVENTS = [
     ] }) },
   // 히든 보스: 대호수의 고래들
   ...WHALES.map(whaleEvent),
+  { id: "pinkyScout", w: () => (s.birthStar && !s.job && s.age >= 16 && s.zone !== "spider" && s.zone !== "sisyphe" ? 1.5 : 0), run: () => ({
+    title: "소지의 방문",
+    text: `하얀 옷차림의 사람이 문 앞에 서 있었다. "${STAR_TIER[s.birthStar.tier]}의 ${s.birthStar.name}. 태어날 때부터 정해진 이름이지. 이제 돌아올 때가 됐다."`,
+    choices: [
+      { label: "소지로 간다", run() { setJob({ type: "finger", name: "소지", rank: 0, exp: 0 }); achieve("finger"); return `소지의 일원이 되었다. 오늘부터 ${s.job.star.name}이라 불린다.`; } },
+      { label: "거절한다", run() { gain("temp", 2); return "문을 닫았다. 별은 사라지지 않는다. 그들은 또 올 것이다."; } },
+    ] }) },
   { id: "starChallenger", w: () => (isPinky() && s.job.star ? 1.2 : 0), run: () => {
     const j = s.job, high = j.star.tier === "tiangang";
     return {
-      combat: { name: `별을 노리는 ${high ? "지살성" : "소지 단원"}`, desc: `${j.star.name}의 별호를 빼앗으러 온 자다. 소지에서 별은 지키는 자의 것이다.`, str: high ? 110 : 65, yieldAt: 15, cause: `${j.star.name}의 별호를 지키다` },
-      win() { s.rep += 4; return `도전자를 물리쳤다. ${j.star.name}의 별호는 여전히 당신의 것이다.`; },
-      lose() {
-        const old = j.star.name;
-        if (high) { j.star = { tier: "disha", name: pick(DISHA) }; setJob(j); return `${old}의 별호를 빼앗겼다. 지살의 ${j.star.name}로 내려앉았다.`; }
-        j.star = null; setJob(j); return `${old}의 별호를 빼앗겼다. 다시 별 없는 단원이 되었다.`;
-      },
+      combat: { name: `${high ? "천강을 시험하는 지살성" : "별을 시샘하는 소지 단원"}`, desc: `별을 타고나지 못한 자들은 ${j.star.name}의 이름값을 시험하러 온다. 별은 빼앗을 수 없지만, 이름에 걸맞은지는 증명해야 한다.`, str: high ? 110 : 65, yieldAt: 15, cause: `${j.star.name}의 이름값을 시험받다` },
+      win() { s.rep += 4; return `도전자를 물리쳤다. ${j.star.name}의 이름이 골목에 한 번 더 퍼졌다.`; },
+      lose() { s.rep -= 6; strain(rand(5, 12)); return s.alive ? `졌다. 별은 그대로지만, 사람들이 ${j.star.name}의 이름을 낮게 부르기 시작했다.` : ""; },
     };
   } },
   { id: "busker", w: () => (s.age >= 8 && s.zone !== "sisyphe" ? 1 : 0), run: () => ({
@@ -1622,29 +1627,6 @@ function whaleEvent(wh) {
     }),
   };
 }
-// ───────── 소지의 별호 ─────────
-function starDuel() {
-  const j = s.job;
-  const toTiangang = j.star?.tier === "disha";
-  const pool = toTiangang ? TIANGANG : DISHA;
-  const seat = pick(pool);
-  return {
-    combat: {
-      name: `${toTiangang ? "32천강" : "72지살"}의 ${seat}`,
-      desc: toTiangang ? `하늘의 별을 가진 자. 소지 안에서도 손에 꼽히는 서른둘 가운데 하나다. 이기면 ${seat}의 별호는 당신의 것이 된다.` : `땅의 별을 가진 자. 소지의 일흔둘 가운데 하나. 이기면 ${seat}의 별호를 물려받는다.`,
-      str: toTiangang ? 125 : 75, yieldAt: 15, flee: false, cause: `${seat}과의 별호 쟁탈에서`,
-    },
-    win() {
-      j.star = { tier: toTiangang ? "tiangang" : "disha", name: seat };
-      setJob(j);
-      s.rep += toTiangang ? 30 : 12;
-      achieve(toTiangang ? "tiangang" : "disha");
-      return toTiangang ? `${seat}을(를) 꺾었다. 이제 32천강의 하나, ${seat}이다. 소지의 누구도 함부로 이름을 부르지 못한다.` : `${seat}을(를) 꺾고 별호를 받았다. 72지살의 하나, ${seat}.`;
-    },
-    lose() { s.rep -= 5; return `${seat}에게 졌다. 별은 아직 멀다.`; },
-  };
-}
-
 function abiLoot(name) {
   return (ABI[name].loot || []).filter(n => !(s.relics || []).includes(n)).map(n => gainRelic(relicOf(n))).join(" ");
 }
@@ -2040,7 +2022,7 @@ const PHRASE = {
   play: "골목에서 뛰어논다", study: "책을 펼친다", train: "몸을 단련한다", rest: "아무것도 하지 않고 쉰다",
   labor: "잡일을 구하러 나간다", social: "사람을 만나러 나간다",
   fixerLic: "협회의 해결사 시험에 응시한다", wingExam: "날개 입사 시험을 본다", joinSynd: "조직의 문을 두드린다",
-  joinFinger: "손가락을 찾아간다", joinPinky: "소지의 문을 두드린다", starDuel: "별을 가진 자에게 결투를 청한다",  factory: "공장에 이력서를 낸다",
+  joinFinger: "손가락을 찾아간다", joinPinky: "소지의 문을 두드린다",  factory: "공장에 이력서를 낸다",
   commission: "의뢰를 하나 받는다", bigCommission: "위험한 의뢰에 손을 댄다", promotion: "협회 승급 심사를 신청한다",
   overtime: "밤늦게까지 일한다", wingPromo: "승진을 노려 본다", racket: "구역을 돌며 수금한다", fingerOp: "지령을 수행한다",
   quit: "일을 그만둔다", retire: "은퇴를 결심한다",
@@ -2180,6 +2162,7 @@ function renderIntro() {
       spider: `다섯 손가락이 자신들의 치부를 버리는 곳, 거미집에서 ${kid}로 태어났다. 어머니 시오미 요루는 갓난아기에게 처음이자 마지막 한마디를 건넸다. "날 닮지 마라."`,
     }[s.zone];
     say(birth, "event", "탄생");
+    if (s.birthStar) say(s.birthStar.tier === "tiangang" ? "태어난 날 밤, 하늘 높이 별 하나가 유난히 밝게 빛났다." : "태어난 날 밤, 땅 가까이 낮게 뜬 별 하나가 오래 지지 않았다.", "event", "별");
     save(); render();
   });
 }
