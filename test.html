@@ -216,7 +216,10 @@ const ZONES = { nest: "둥지", back: "뒷골목", out: "외곽", wing: "날개 
 const FLOORS = ["지하 1층 푸드코트", "1층 잡화관", "2층 의류관", "3층 가전관", "4층 상영관", "옥상"];
 const FLOOR_FOES = ["푸드코트 점원", "잡화관 매니저", "의류관 마네킹들", "가전관 보안 요원", "상영관 안내원"];
 const isN = () => (s.job?.type === "wing" && s.job.co === "N사") || (s.zone === "wing" && s.wingCo === "N사");
-const nestLike = st => st.zone === "nest" || st.zone === "wing";
+// H사는 날개 가운데 하나다. 다만 세 가문과 흑수가 있어 구역의 모습은 다른 날개와 다르다.
+const isH = st => st.zone === "hcorp" || (st.zone === "wing" && st.wingCo === "H사");
+const zkey = st => (isH(st) ? "hcorp" : st.zone);
+const nestLike = st => (st.zone === "nest" || st.zone === "wing") && !isH(st);
 const streetLike = st => st.zone === "back" || st.zone === "out";
 // 거미집의 아비들. 시오미 요루(소지)는 탈출 전까지 거미집에 남아 있다.
 const ABI = {
@@ -316,6 +319,7 @@ const WINGS = [
   { co: "R사", flavor: "용병을 길러 내는 군사 기업. 팀 이름이 동물 이름이다." },
   { co: "N사", flavor: "경험을 통조림에 담는 날개. 영상을 남기는 것과 경험을 위조하는 것을 금기로 삼는다." },
   { co: "T사", flavor: "시간과 관련된 특이점을 쥐고 있다. 근무 시간이 늘 이상하게 길다." },
+  { co: "H사", flavor: "가씨 · 설씨 · 사씨 세 가문이 이끄는 날개. 재갈을 쥔 주인 곁에는 늘 흑수가 있다." },
 ];
 const FINGERS = [
   { name: "엄지", flavor: "철저한 위계. 윗사람의 말은 곧 법이다." },
@@ -344,20 +348,23 @@ let modalOpen = false;
 
 function rollOrigin() {
   const r = Math.random();
-  return r < 0.1 ? "nest" : r < 0.16 ? "wing" : r < 0.22 ? "hcorp" : r < 0.93 ? "back" : r < 0.97 ? "out" : "spider";
+  return r < 0.1 ? "nest" : r < 0.22 ? "wing" : r < 0.93 ? "back" : r < 0.97 ? "out" : "spider";
 }
 function newLife(name, gender, origin) {
-  const zone = ZONES[origin] ? origin : rollOrigin();
-  const base = { nest: 8, wing: 9, spider: 6, hcorp: 7 }[zone] || 4;
+  // "hcorp"는 H사 날개 출생을 뜻한다
+  const forceH = origin === "hcorp";
+  const zone = forceH ? "wing" : ZONES[origin] ? origin : rollOrigin();
+  const wingCo = zone === "wing" ? (forceH || chance(0.45) ? "H사" : pick(WINGS.filter(w => w.co !== "H사")).co) : null;
+  const base = (wingCo === "H사" ? 7 : { nest: 8, wing: 9, spider: 6 }[zone]) || 4;
   return {
     name: name || pick(NAMES),
     gender: gender === "m" || gender === "f" ? gender : pick(["m", "f"]),
     age: 0,
     district: rand(1, 25),
     zone,
-    wingCo: zone === "wing" ? pick(WINGS).co : null,
+    wingCo,
     spider: zone === "spider" ? { abi: ["뤼엔", "발렌치나", "마티아스", "칼리스토", "요루"], escaped: false, teach: {} } : null,
-    hFamily: zone === "hcorp" && chance(0.4) ? pick(H_FAMILIES) : null,
+    hFamily: wingCo === "H사" && chance(0.4) ? pick(H_FAMILIES) : null,
     // 별호는 태어날 때 정해진다. 소지에 들어가면 그 별로 불린다.
     birthStar: (r => (r < 0.03 ? { tier: "tiangang", name: pick(TIANGANG.filter(n => !TAKEN_STARS.includes(n))) } : r < 0.1 ? { tier: "disha", name: pick(DISHA.filter(n => !TAKEN_STARS.includes(n))) } : null))(Math.random()),
     hp: 100, sp: 100,
@@ -618,7 +625,7 @@ const ACTIONS = [
   { id: "toy", g: "기본", label: "장난감", desc: "신중 ↑ · 정신 회복", cond: () => s.age >= 2 && s.age < 6,
     run() { gain("prud", 1); heal(0, 8); return `${s.zone === "spider" ? "아비가 던져 준 나무 조각" : nestLike(s) ? "날개 로고가 찍힌 블록" : "누군가 버린 낡은 인형"}을 가지고 놀았다. 신중 +1`; } },
   { id: "play", g: "기본", label: "놀기", desc: "정신 회복, 작은 성장", cond: () => s.age >= 3 && s.age < 8,
-    run() { heal(0, 15); const st = pick(VIRTUES); gain(st[0], 1); const where0 = s.zone === "spider" ? "실 사이에 숨어 혼자 놀았다" : (PLAY_PLACE[s.zone] || "골목에서 뛰어논다").replace("논다", "놀았다").replace("다닌다", "다녔다"); return `${where0}. ${st[1]} +1`; } },
+    run() { heal(0, 15); const st = pick(VIRTUES); gain(st[0], 1); const where0 = s.zone === "spider" ? "실 사이에 숨어 혼자 놀았다" : (PLAY_PLACE[zkey(s)] || "골목에서 뛰어논다").replace("논다", "놀았다").replace("다닌다", "다녔다"); return `${where0}. ${st[1]} +1`; } },
   { id: "study", g: "기본", label: "공부", desc: "신중 ↑ · 정신 소모", cond: () => s.age >= 5,
     run() { const n = gain("prud", rand(2, 5) + (nestLike(s) ? 2 : 0)); strain(rand(3, 8), "공부에 짓눌려"); return `책과 씨름했다. 신중 +${n}`; } },
   { id: "train", g: "기본", label: "단련", desc: "용기·정의 ↑ · 체력 소모", cond: () => s.age >= 8,
@@ -628,7 +635,7 @@ const ACTIONS = [
   { id: "labor", g: "기본", label: "잡일", desc: "돈 · 자제 ↑", cond: () => s.age >= 12 && !s.job,
     run() { const m = rand(150, 500) + s.temp * 8; s.money += m; const n = gain("temp", rand(1, 3)); hurt(rand(2, 6), "잡일을 하다 사고로"); return `배달, 하역, 청소. ${fmt(m)}안을 벌었다. 자제 +${n}`; } },
   { id: "walk", g: "기본", label: "산책", desc: "정신 회복 · 작은 발견", cond: () => s.age >= 6,
-    run() { heal(0, 10); if (chance(0.2)) { const m = rand(50, 400); s.money += m; return `${pick(SCENES[s.zone] || SCENES.back)} 걷다가 바닥에서 ${fmt(m)}안을 주웠다.`; } return `${pick(SCENES[s.zone] || SCENES.back)} 한참을 걷고 나니 머리가 조금 가벼워졌다.`; } },
+    run() { heal(0, 10); if (chance(0.2)) { const m = rand(50, 400); s.money += m; return `${pick(SCENES[zkey(s)] || SCENES.back)} 걷다가 바닥에서 ${fmt(m)}안을 주웠다.`; } return `${pick(SCENES[zkey(s)] || SCENES.back)} 한참을 걷고 나니 머리가 조금 가벼워졌다.`; } },
   { id: "diary", g: "기본", label: "일기", desc: "신중 ↑ · 정신 회복 · 각오 +1", cond: () => s.age >= 8,
     run() { gain("prud", 1); heal(0, 8); resolveUp(); return pick(["오늘 한 일과 하지 못한 일을 적었다.", "누구에게도 하지 못한 말을 공책에 적었다.", "지난해의 나에게 편지를 썼다."]) + " 각오 +1"; } },
   { id: "meditate", g: "기본", label: "명상", desc: "정신 회복 · 가끔 각오 +1", cond: () => s.age >= 12,
@@ -658,7 +665,7 @@ const ACTIONS = [
   { id: "joinFinger", g: "진로", label: "손가락 입문", desc: "위험하지만 강력한 집단", cond: () => s.age >= 18 && !s.job && s.zone === "back", run: joinFinger },
   { id: "factory", g: "진로", label: "공장 취직", desc: "적은 월급, 적은 위험", cond: () => s.age >= 16 && !s.job,
     run() { setJob({ type: "worker" }); return "공장에 들어갔다. 컨베이어 벨트는 쉬지 않는다."; } },
-  { id: "heishouJoin", g: "진로", label: "환을 먹는다", desc: "흑수가 되어 재갈을 쥔 주인을 호위한다 · 전투력 ↑ · 정신 ↓", cond: () => s.age >= 16 && !s.job && s.zone === "hcorp",
+  { id: "heishouJoin", g: "진로", label: "환을 먹는다", desc: "흑수가 되어 재갈을 쥔 주인을 호위한다 · 전투력 ↑ · 정신 ↓", cond: () => s.age >= 16 && !s.job && isH(s),
     run() {
       const branch = pick(HEISHOU), master = `${pick(H_FAMILIES)}의 ${pick(NAMES.filter(n => n !== s.name))}`;
       setJob({ type: "heishou", branch, rank: 0, master });
@@ -946,7 +953,7 @@ function jyiUp(gains) {
 }
 const jyiFull = () => !!s.jyi && JYI.every(([k]) => s.jyi[k] >= 100);
 const jyiText = () => JYI.map(([k, n]) => `${n} ${(s.jyi || {})[k] || 0}`).join(" · ");
-const jyiShown = () => s.zone === "hcorp" || !!s.hFamily || !!s.heir;
+const jyiShown = () => isH(s) || !!s.hFamily || !!s.heir;
 
 function becomeHead() {
   s.heir.head = true;
@@ -1337,7 +1344,7 @@ const EVENTS = [
       } },
       { label: "거절한다", run() { gain("temp", 3); return "고개를 저었다. 형체는 아무 말 없이 사라졌다. 머리는 두 번 묻지 않는다."; } },
     ] }) },
-  { id: "heishouFeud", w: () => (s.zone === "hcorp" && s.age >= 16 && s.job?.type !== "heishou" ? 0.8 : 0), run: () => ({
+  { id: "heishouFeud", w: () => (isH(s) && s.age >= 16 && s.job?.type !== "heishou" ? 0.8 : 0), run: () => ({
     title: "흑수의 다툼",
     text: "길 한복판에서 서로 다른 가문의 흑수들이 칼을 뽑았다. 재갈을 쥔 주인들은 뒤에서 지켜볼 뿐이다. 휘말린 행인이 바닥에 쓰러져 있다.",
     choices: [
@@ -1606,9 +1613,9 @@ function milestones() {
   if (s.birthStar && s.age === 16) m("별호", `어느 밤, 잠에서 깨어나 보니 가슴속에 이름 하나가 새겨져 있었다. ${STAR_TIER[s.birthStar.tier]}의 ${s.birthStar.name}. 누가 알려 준 것도 아닌데 처음부터 알고 있던 것 같았다. 이 별을 가진 사람이 또 있는지, 누가 별을 가졌는지는 아무도 모른다. 이 일은 누구에게도 말하지 않기로 했다.`, () => { s.starKnown = true; achieve(s.birthStar.tier); });
   if (s.zone === "spider") return spiderMilestones(out, m);
   if (s.age === 1) m("첫걸음", nestLike(s) ? "깨끗한 바닥 위에서 첫걸음을 뗐다." : "녹슨 철판 위에서 첫걸음을 뗐다.");
-  if (s.zone === "hcorp" && s.age === 6) m("서당", "H사 구역의 서당에 들어갔다. 예법과 글씨, 그리고 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
+  if (isH(s) && s.age === 6) m("서당", "H사 구역의 서당에 들어갔다. 예법과 글씨, 그리고 윗사람 앞에서 고개를 숙이는 법을 배웠다.", () => { gain("prud", 3); gain("temp", 3); });
   if (s.hFamily && s.age === 16) m("가주 후보", `${s.hFamily}의 원로회가 당신을 H사 가주 후보로 내세웠다. 다른 두 가문도 저마다 후보를 세웠다. 그날부터 모두의 눈빛이 달라졌다.`, () => { s.heir = { wins: 0 }; achieve("heir"); });
-  if (s.age === 6 && s.zone !== "hcorp") {
+  if (s.age === 6 && !isH(s)) {
     if (s.zone === "wing") m("사내 학교", `${s.wingCo} 직원 자녀들이 다니는 학교에 들어갔다. 교과서 표지에도 날개 로고가 박혀 있다.`, () => gain("prud", 6));
     else if (s.zone === "nest") m("입학", "둥지의 학교에 들어갔다. 날개 입사를 목표로 하는 아이들 사이에서.", () => gain("prud", 4));
     else m("골목의 학교", "학교는 없었다. 대신 골목이 가르쳐 주었다. 3시 10분 전에는 집에 들어가야 한다는 것을.", () => gain("temp", 3));
@@ -1867,7 +1874,7 @@ function passive() {
   else if (j?.type === "butler") income = 4000 + j.rank * 3000;
   if (income) { s.money += income; say(`${jobLabel(j)} 수입 ${fmt(income)}안.`, "act"); }
   if (s.age >= 18) {
-    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, sisyphe: 200 })[s.zone] + s.kids * (nestLike(s) ? 1500 : 300);
+    const cost = ({ nest: 5000, wing: 5000, back: 700, out: 250, spider: 0, hcorp: s.hFamily ? (s.job ? 3000 : 0) : 1200, sisyphe: 200 })[zkey(s)] + s.kids * (nestLike(s) ? 1500 : 300);
     s.money -= cost;
   }
   if (s.money < -3000) {
@@ -2060,7 +2067,7 @@ const SPIDER_OK = ["sleep", "babble", "crawl", "toy", "play", "study", "train", 
 // 놀이는 사는 곳에 따라 다르게 부른다
 const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린이집 마당에서 뛰어논다", hcorp: "기와집 마당에서 뛰어논다", out: "폐허 사이를 뛰어다닌다" };
 const phrase0 = a => (s.zone === "spider" && PHRASE_SPIDER[a.id]) || PHRASE[a.id] || a.label;
-const phrase = a => (a.id === "play" && PLAY_PLACE[s.zone]) || phrase0(a);
+const phrase = a => (a.id === "play" && PLAY_PLACE[zkey(s)]) || phrase0(a);
 const SISYPHE_OK = ["study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm", "canned", "clerk", "climb", "cinema", "leaveSisyphe", "feed"];
 const usable = a => a.cond() && !(a.block && a.block()) && (s.zone !== "spider" || SPIDER_OK.includes(a.id)) && (s.zone !== "sisyphe" || SISYPHE_OK.includes(a.id));
 
@@ -2081,7 +2088,7 @@ function makeOffer() {
 }
 
 function renderTurn() {
-  if (!s.offer || !s.offer.length) { s.offer = makeOffer(); s.scene = pick(SCENES[s.zone] || SCENES.back); }
+  if (!s.offer || !s.offer.length) { s.offer = makeOffer(); s.scene = pick(SCENES[zkey(s)] || SCENES.back); }
   const total = apFor(s);
   const season = (total === 1 ? ["한 해"] : total === 2 ? ["상반기", "하반기"] : ["봄", "여름", "가을"])[total - s.ap] || "한 해";
   const opts = s.offer.map(id => ACTIONS.find(a => a.id === id)).filter(a => a && usable(a));
@@ -2183,7 +2190,7 @@ function renderIntro() {
       back: `${where(s)}에서 ${kid}로 태어났다. 뒷골목의 낡은 방 한 칸. 흔한 시작이다.`,
       out: `${where(s)}에서 ${kid}로 태어났다. 도시 바깥, 외곽의 폐허 가장자리. 살아남은 것만으로 대단하다.`,
       spider: `다섯 손가락이 자신들의 치부를 버리는 곳, 거미집에서 ${kid}로 태어났다. 어머니 시오미 요루는 갓난아기에게 처음이자 마지막 한마디를 건넸다. "날 닮지 마라."`,
-    }[s.zone];
+    }[zkey(s)];
     say(birth, "event", "탄생");
     if (s.birthStar) say(s.birthStar.tier === "tiangang" ? "태어난 날 밤, 하늘 높이 별 하나가 유난히 밝게 빛났다." : "태어난 날 밤, 땅 가까이 낮게 뜬 별 하나가 오래 지지 않았다.", "event", "별");
     save(); render();
