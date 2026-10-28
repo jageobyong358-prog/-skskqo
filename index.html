@@ -218,10 +218,10 @@ const nestLike = st => st.zone === "nest" || st.zone === "wing";
 const streetLike = st => st.zone === "back" || st.zone === "out";
 // 거미집의 아비들. 시오미 요루(소지)는 탈출 전까지 거미집에 남아 있다.
 const ABI = {
-  "뤼엔": { finger: "검지", str: 105, mang: 3, desc: "검은 양복에 가면을 쓴 검지의 신탁 대행자. 거미집의 판을 짠 사람이고, 모든 것을 지령의 이름으로 행한다." },
-  "발렌치나": { finger: "엄지", full: "발렌치나 보냐텔리", str: 80, mang: 1, line: "씨발, 어디 싸돌아다니다 이제 기어 나왔어, 이 배은망덕한 새끼야? 키워 준 은혜도 모르고 좆같이 도망을 쳐? 이리 와, 오늘 다리몽둥이 부러질 줄 알아.", desc: "보냐텔리 가문에서 쫓겨난 연기 전쟁의 영웅. 합을 주고받을수록 빨라지는 속검술 팔레르모, 오른눈에 박힌 오딘의 눈." },
-  "마티아스": { finger: "중지", str: 76, mang: 0, desc: "중지의 큰형님. 봉인 붕대가 한 겹씩 풀릴 때마다 대검 레바테인이 열기를 토한다.", line: "어이, 막내! 식구가 집을 나가면 쓰나. 큰형님이 직접 데리러 왔다!" },
-  "칼리스토": { finger: "약지", str: 72, mang: 0, desc: "약지 신체파의 전직 마에스트로. 뼈와 근육을 늘이는 티비아를 휘두르고, 개조 인형들을 부린다.", line: "아아, 여기 계셨군요. 당신은 아직 미완성입니다. 제가 마저 완성해 드리지요." },
+  "뤼엔": { finger: "검지", str: 170, mang: 3, loot: ["남겨진 신탁", "계속 울리는 단말기"], desc: "검은 양복에 가면을 쓴 검지의 신탁 대행자. 거미집의 판을 짠 사람이고, 모든 것을 지령의 이름으로 행한다." },
+  "발렌치나": { finger: "엄지", full: "발렌치나 보냐텔리", str: 130, mang: 1, loot: ["오딘의 눈", "레이피어"], line: "씨발, 어디 싸돌아다니다 이제 기어 나왔어, 이 배은망덕한 새끼야? 키워 준 은혜도 모르고 좆같이 도망을 쳐? 이리 와, 오늘 다리몽둥이 부러질 줄 알아.", desc: "보냐텔리 가문에서 쫓겨난 연기 전쟁의 영웅. 합을 주고받을수록 빨라지는 속검술 팔레르모, 오른눈에 박힌 오딘의 눈." },
+  "마티아스": { finger: "중지", str: 160, mang: 0, loot: ["레바테인", "앙갚음 장부 [번외]"], desc: "중지의 큰형님. 봉인 붕대가 한 겹씩 풀릴 때마다 대검 레바테인이 열기를 토한다.", line: "어이, 막내! 식구가 집을 나가면 쓰나. 큰형님이 직접 데리러 왔다!" },
+  "칼리스토": { finger: "약지", str: 112, mang: 0, loot: ["티비아", "마에스트로의 반지"], desc: "약지 신체파의 전직 마에스트로. 뼈와 근육을 늘이는 티비아를 휘두르고, 개조 인형들을 부린다.", line: "아아, 여기 계셨군요. 당신은 아직 미완성입니다. 제가 마저 완성해 드리지요." },
   "요루": { finger: "소지", full: "시오미 요루", str: 74, mang: 0, desc: "하얀 시로무쿠 차림의 어머니. 지혜성도가 지나간 자리마다 파란 검흔이 남는다." },
 };
 const H_FAMILIES = ["청운 가문", "백린 가문", "현무 가문", "금령 가문", "적하 가문"];
@@ -249,6 +249,17 @@ const RELICS = [
   // 히든 보스 뇌횡의 전리품: 유적에서는 나오지 않는다
   { name: "카포의 모자", pow: 10, rep: 30, hidden: true, desc: "동부 엄지 카포 IIII의 모자. 쓰고 있으면 골목의 조직원들이 먼저 길을 비킨다." },
   { name: "천퇴성도", pow: 25, hidden: true, desc: "소지의 천퇴성이 쓰던 칼. 베기도 전에 상대가 물러선다." },
+  // 거미집 아비들의 전리품
+  { name: "남겨진 신탁", pow: 15, stat: "prud", hidden: true, desc: "뤼엔이 끝내 수행하지 못한 지령이 적힌 종이. 글씨가 아직 마르지 않았다." },
+  { name: "계속 울리는 단말기", pow: 10, curse: "sp", hidden: true, desc: "검지의 단말기. 주인이 죽었는데도 새 지령 알림이 멈추지 않는다." },
+  { name: "오딘의 눈", pow: 18, stat: "prud", hidden: true, desc: "발렌치나의 오른눈에 박혀 있던 유물. 다가올 찰나를 먼저 보여 준다." },
+  { name: "레이피어", pow: 16, hidden: true, desc: "코등이에 리볼버 약실이 달린 레이피어. 탄을 격발해 검신을 쏘아 낸다." },
+  { name: "레바테인", pow: 24, curse: "hp", hidden: true, desc: "세 겹의 붕대로 봉인된 대검. 붕대를 풀 때마다 쥔 손까지 태운다." },
+  { name: "앙갚음 장부 [번외]", pow: 12, stat: "just", hidden: true, desc: "중지가 갚아야 할 원한을 적어 둔 장부의 번외편. 마지막 장에 마티아스의 이름이 있다." },
+  { name: "티비아", pow: 15, hidden: true, desc: "뼈와 근육을 늘이고 비트는 칼리스토의 주 무기." },
+  { name: "마에스트로의 반지", pow: 10, stat: "temp", hidden: true, desc: "약지 마에스트로의 증표. 끼고 있으면 모든 것이 재료로 보인다." },
+  // 붉은 안개의 전리품
+  { name: "미미크리 [프로토타입]", pow: 30, curse: "hp", hidden: true, desc: "붉은 안개가 쓰던 E.G.O 무기의 시제품. 벤 것을 먹고 주인의 피도 탐낸다." },
 ];
 // 마지막 글자에 받침이 있는지 (조사 고르기용)
 const hasBatchim = w => { const c = w.charCodeAt(w.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
@@ -286,7 +297,7 @@ const ACH = {
   heir: "가주 후보", head: "가주 계승", lord: "H사 군주", heishou: "흑수 입문", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
+  leiHeng: "동부십검을 꺾다", kali: "붉은 안개를 걷어 내다", spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
   oldage: "천수를 누림", ego: "E.G.O 개화", shin: "신(心) 터득", mang: "망(望) 발현", mang5: "다섯 겹의 망", egoUnstable: "불안정 E.G.O 개화", rich: "백만장자", family: "가정을 꾸림", aug: "온몸이 의체",
@@ -1215,7 +1226,7 @@ const EVENTS = [
       choices: [
         { label: "맞선다", sub: `전투 · 가르침 ${teachOf(name)}/10`, run: () => ({
           combat: abiFoe(name, { yieldAt: 10 }),
-          win() { s.spider.abi = s.spider.abi.filter(n => n !== name); s.rep += 15; achieve("abiSlayer"); return `${name}을(를) 베었다.${s.relic ? " 아라야시키가 지나간 자리에는 아무것도 남지 않았다." : ""}`; },
+          win() { s.spider.abi = s.spider.abi.filter(n => n !== name); s.rep += 15; achieve("abiSlayer"); return `${name}을(를) 베었다. ${abiLoot(name)}`; },
           lose() { return `${name}에게 짓밟혔다. 다음엔 놓치지 않겠다는 웃음소리가 등 뒤에 남았다.`; },
           fled() { return "골목과 골목 사이로 숨어들었다. 아직은 아니다."; },
         }) },
@@ -1344,6 +1355,28 @@ const EVENTS = [
         fled() { return "칼이 닿기 전에 골목으로 몸을 던졌다. 등 뒤에서 웃음소리가 들렸다."; },
       }) },
       { label: "고개를 숙이고 지나간다", run: () => "모자 챙 아래의 눈이 잠시 따라오다 거두어졌다." },
+    ] }) },
+  // 히든 보스: 붉은 안개 칼리 (체력 1800 · 망 없음 · 위력 230)
+  { id: "kali", w: () => (!s.kaliDone && s.age >= 25 && power(s) >= 170 && s.zone !== "spider" && s.zone !== "sisyphe" ? 0.3 : 0), run: () => ({
+    title: "붉은 안개",
+    text: "골목 전체가 붉게 흐려졌다. 안개 속에서 붉은 코트 자락이 펄럭인다.\n특색, 붉은 안개. 칼리.\n그녀는 아무 말 없이 대검을 고쳐 쥐었다. 거대한 붉은 칼날이 숨을 쉬듯 꿈틀거렸다.",
+    choices: [
+      { label: "맞선다", sub: "체력 1800 · 위력 230 · 처치하면 미미크리 [프로토타입]", run: () => ({
+        combat: {
+          name: "붉은 안개 칼리", hp: 1800, str: 230, dmgMult: 5, hitMult: 0.4, noCap: true, yieldAt: 10,
+          desc: "특색, 붉은 안개. 소속은 ???????. 망은 감지 않는다. 그럴 필요가 없다.",
+          cause: "붉은 안개의 칼날에",
+        },
+        win(n) {
+          s.kaliDone = true;
+          s.rep += 80;
+          achieve("kali");
+          return `${n}합 끝에 붉은 안개가 걷혔다. 칼리가 처음으로 입을 열었다. "...제법이네." 그녀가 남기고 간 칼 한 자루. ${gainRelic(relicOf("미미크리 [프로토타입]"))}`;
+        },
+        lose() { return "붉은 칼날이 눈앞에서 멈췄다. 칼리는 등을 돌려 안개 속으로 사라졌다. 살려 둔 것인지, 흥미를 잃은 것인지 알 수 없다."; },
+        fled() { return "안개 밖으로 필사적으로 달렸다. 뒤따라오는 발소리는 없었다."; },
+      }) },
+      { label: "숨을 죽이고 물러난다", run: () => "안개가 걷힐 때까지 벽에 등을 붙이고 있었다. 칼리는 이쪽을 보지도 않았다." },
     ] }) },
   { id: "busker", w: () => (s.age >= 8 && s.zone !== "sisyphe" ? 1 : 0), run: () => ({
     title: "길거리 연주자",
@@ -1487,6 +1520,10 @@ function milestones() {
 
 // ───────── 거미집 ─────────
 const teachOf = name => (s.spider?.teach || {})[name] || 0;
+// 아비를 쓰러뜨리면 그 아비의 물건 두 가지를 얻는다
+function abiLoot(name) {
+  return (ABI[name].loot || []).filter(n => !(s.relics || []).includes(n)).map(n => gainRelic(relicOf(n))).join(" ");
+}
 function abiFoe(name, extra = {}) {
   const a = ABI[name];
   return { name: `${a.finger}의 아비 ${a.full || name}`, desc: a.desc, str: a.str, mang: a.mang, easy: teachOf(name) * 4, cause: `${a.finger}의 아비 ${name}에게 패배하여`, ...extra };
@@ -1625,7 +1662,7 @@ function gauntlet(list) {
       s.spider.done = true;
       s.rep += 30; heal(0, 20);
       achieve("abiSlayer"); achieve("spiderEnd");
-      return "뤼엔의 세 겹의 망이 끊어졌다. 쓰러지며 그가 웃었다. \"끝까지 알아보지 못하였구나.\" 무슨 뜻인지 알 수 없었다. 거미집의 실이 하나둘 끊어져 내렸다.";
+      return `뤼엔의 세 겹의 망이 끊어졌다. 쓰러지며 그가 웃었다. "끝까지 알아보지 못하였구나." 무슨 뜻인지 알 수 없었다. 거미집의 실이 하나둘 끊어져 내렸다. ${abiLoot("뤼엔")}`;
     },
   };
   return {
@@ -1633,7 +1670,7 @@ function gauntlet(list) {
     win() {
       s.spider.abi = s.spider.abi.filter(n => n !== name);
       achieve("abiSlayer");
-      return between(`${ABI[name].finger}의 아비 ${name}을(를) 베었다.`);
+      return between(`${ABI[name].finger}의 아비 ${name}을(를) 베었다. ${abiLoot(name)}`);
     },
   };
 }
