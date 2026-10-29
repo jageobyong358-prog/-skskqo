@@ -487,15 +487,16 @@ function mindBreak(cause) {
   say("정신이 바닥났지만 가까스로 자신을 붙잡았다. 무언가를 잃은 기분이다.", "bad");
 }
 function bloomEgo(stable, how) {
-  const name = pick(EGO_NAMES);
-  s.ego = { name, stable };
-  askName("E.G.O", name, n => { s.ego.name = n; });
+  s.ego = { name: "이름 없는 E.G.O", stable };
+  askName(stable ? "E.G.O" : "불안정한 E.G.O", pick(EGO_NAMES), name => {
+    s.ego.name = name;
+    say(stable
+      ? `${how} 자신을 똑바로 마주했다. 마음이 꽃처럼 열리며 E.G.O 「${name}」이(가) 개화했다.`
+      : `${how} 마음이 반쯤만 열렸다. 균열 사이로 불안정한 E.G.O 「${name}」이(가) 피어났다. 언제 다시 뒤틀릴지 모른다.`, "good");
+  });
   s.sp = stable ? 200 : 40;
   if (stable) { VIRTUES.forEach(([k]) => gain(k, 8)); achieve("ego"); }
   else { gain("fort", 12); gain("just", 12); achieve("egoUnstable"); }
-  say(stable
-    ? `${how} 자신을 똑바로 마주했다. 마음이 꽃처럼 열리며 E.G.O 「${name}」이(가) 개화했다.`
-    : `${how} 마음이 반쯤만 열렸다. 균열 사이로 불안정한 E.G.O 「${name}」이(가) 피어났다. 언제 다시 뒤틀릴지 모른다.`, "good");
 }
 // 아라야시키는 휘두를 때마다 기억을 지운다
 function loseMemory(n) {
@@ -519,6 +520,8 @@ function die(cause, final) {
 // yieldAt을 넘기지 않으면 목숨을 건 싸움이다.
 let combat = null;
 function settle(out, done) {
+  // { askName: { kind, suggest, apply }, then() } : 이름부터 정하고, 그 이름으로 이야기를 잇는다
+  if (out && out.askName) return showNameModal({ kind: out.askName.kind, current: out.askName.suggest, apply: out.askName.apply }, () => settle(out.then(), done));
   if (out && out.combat) return startCombat(out, done);
   if (out && out.choices) return showChoice(out, done);
   done(out);
@@ -866,10 +869,10 @@ function reflectSin(bonus) {
 function social() {
   if (!s.partner) {
     if (chance(0.3 + s.temp / 200)) {
-      s.partner = pick(NAMES.filter(n => n !== s.name)); s.love = 1;
-      askName("연인", s.partner, n => { s.partner = n; });
-      heal(0, 10);
-      return `${s.partner}을(를) 만났다. 이 도시에도 따뜻한 것이 남아 있었다.`;
+      return {
+        askName: { kind: "연인", suggest: pick(NAMES.filter(n => n !== s.name)), apply: n => { s.partner = n; s.love = 1; } },
+        then() { heal(0, 10); return `${s.partner}을(를) 만났다. 이 도시에도 따뜻한 것이 남아 있었다.`; },
+      };
     }
     heal(0, 5);
     return "사람들을 만났지만 특별한 인연은 없었다.";
@@ -881,7 +884,12 @@ function social() {
     return `${s.partner}와(과) 시간을 보냈다.`;
   }
   heal(0, 12);
-  if (s.age < 50 && s.kids < 4 && chance(0.35)) { s.kids++; const kn = pick(NAMES.filter(n => n !== s.name && n !== s.partner)); (s.kidNames || (s.kidNames = [])).push(kn); const ki = s.kidNames.length - 1; askName(`${s.kids}번째 아이`, kn, n => { s.kidNames[ki] = n; }); return `${s.kids === 1 ? gx("아버지가", "어머니가") + " 되었다." : `${s.kids}번째 아이가 태어났다.`} 이 아이는 둥지에서 키우고 싶다.`; }
+  if (s.age < 50 && s.kids < 4 && chance(0.35)) {
+    return {
+      askName: { kind: `${s.kids + 1}번째 아이`, suggest: pick(NAMES.filter(n => n !== s.name && n !== s.partner)), apply: n => { s.kids++; (s.kidNames || (s.kidNames = [])).push(n); } },
+      then() { const n = s.kidNames[s.kidNames.length - 1]; return `${s.kids === 1 ? gx("아버지가", "어머니가") + " 되었다." : `${s.kids}번째 아이가 태어났다.`} 이름은 ${n}. 이 아이는 둥지에서 키우고 싶다.`; },
+    };
+  }
   return `${s.partner}와(과) 조용한 저녁을 보냈다.`;
 }
 
@@ -1793,8 +1801,11 @@ function spiderMilestones(out, m) {
   if (s.age === 4) m("다섯 아비", "엄지, 검지, 중지, 약지, 소지. 서로를 혐오하는 다섯 손가락이 이곳에서만은 손을 잡았다. 그들이 보낸 다섯 아비가 너를 기른다. 무엇을 위해서인지는 아직 아무도 말해 주지 않는다.");
   if (s.age >= 5 && s.age <= 22) out.push({ run: abiLesson });
   if (s.age === 12) {
-    const dog = pick(DOG_NAMES);
-    m("강아지", `어디선가 흘러든 강아지 한 마리가 방에 숨어들었다. ${dog}(이)라고 이름 붙였다. 거미집에서 처음 만난 따뜻한 것이었다.`, () => { s.dog = dog; heal(0, 25); askName("강아지", dog, n => { s.dog = n; }); });
+    out.push({ run: () => ({
+      title: "강아지",
+      askName: { kind: "강아지", suggest: pick(DOG_NAMES), apply: n => { s.dog = n; heal(0, 25); } },
+      then: () => `어디선가 흘러든 강아지 한 마리가 방에 숨어들었다. ${s.dog}(이)라고 이름 붙였다. 거미집에서 처음 만난 따뜻한 것이었다.`,
+    }) });
   }
   if (s.age === 13) m("아라야시키", "아비들이 검 한 자루를 쥐여 주었다. 벤 것의 존재를 세상에서 지워 버리는 유물, 아라야시키. 휘두를 때마다 쥔 사람의 기억도 함께 지워 간다고 했다. 너는 이 검을 다루기 위해 길러지고 있었다.", () => { s.relic = "아라야시키"; s.memory = 100; });
   if (s.age === 15) m("작별", `${s.dog || "강아지"}가 차갑게 식어 있었다. 전날 어느 아비가 "쓸모없는 것"이라고 중얼거렸던 것이 떠올랐다.`, () => strain(rand(20, 30), "강아지를 잃은 슬픔에"));
@@ -2068,7 +2079,7 @@ function processQueue() {
   if (!ev) { save(); render(); return; }
   const res = ev.run();
   if (!res) return processQueue();
-  if (res.choices || res.combat) {
+  if (res.choices || res.combat || res.askName) {
     settle(res, text => { say(text, "event", res.title || res.combat.name); processQueue(); });
   } else {
     say(res.text, "event", res.title);
@@ -2110,31 +2121,31 @@ function save() { if (s && s.alive) store.set(SAVE_KEY, s); }
 // E.G.O, 연인, 아이, 강아지처럼 새 이름이 생기면 무작위 이름을 먼저 붙이고, 화면이 한가해지면 직접 고칠 수 있게 묻는다.
 let nameQueue = [];
 function askName(kind, current, apply) { nameQueue.push({ kind, current, apply }); }
-function showNameModal() {
-  const q = nameQueue.shift();
+function showNameModal(given, after) {
+  const q = given || nameQueue.shift();
   modalOpen = true;
   $("#modalRoot").innerHTML = `
     <div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="nTitle">
       <div class="modal card">
         <div class="eyebrow">이름 짓기</div>
         <h3 id="nTitle">${esc(q.kind)}의 이름</h3>
-        <p>지금은 「${esc(q.current)}」(이)라고 부르고 있다. 다른 이름으로 부를까?</p>
+        <p>어떤 이름으로 부를까? 비워 두면 「${esc(q.current)}」(이)가 된다.</p>
         <form id="nameForm" class="choices">
-          <input id="nameField" maxlength="16" value="${esc(q.current)}" style="background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:10px 12px;font-size:17px">
+          <input id="nameField" maxlength="16" placeholder="${esc(q.current)}" style="background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:10px 12px;font-size:17px">
           <button class="btn primary" type="submit" id="nameOk">이 이름으로 정한다</button>
-          <button class="btn" type="button" id="nameKeep">그대로 둔다</button>
         </form>
       </div>
     </div>`;
-  const close = name => {
+  $("#nameForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = $("#nameField").value.trim() || q.current;
     modalOpen = false;
     $("#modalRoot").innerHTML = "";
-    if (name && name !== q.current) { q.apply(name); say(`${q.kind}의 이름을 「${name}」(으)로 지었다.`, "act"); }
+    q.apply(name);
+    if (after) return after();
     save(); render();
-  };
-  $("#nameForm").addEventListener("submit", e => { e.preventDefault(); close($("#nameField").value.trim()); });
-  $("#nameKeep").addEventListener("click", () => close(null));
-  $("#nameField").focus(); $("#nameField").select();
+  });
+  $("#nameField").focus();
 }
 
 function showChoice(res, done) {
