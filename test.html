@@ -2335,9 +2335,10 @@ function renderIntro() {
         <div class="field">
           <label for="nameInput">이름</label>
           <div class="field-row">
-            <input id="nameInput" maxlength="12" value="${esc(pick(NAMES))}">
+            <input id="nameInput" maxlength="12" placeholder="이름을 적어 주세요" autocomplete="off">
             <button class="btn" id="randName">무작위</button>
           </div>
+          <p id="nameHint" hidden style="margin:0;color:var(--blood);font-size:13px">이름을 먼저 적어야 태어날 수 있다.</p>
         </div>
         <div class="field">
           <label id="genderLabel">성별</label>
@@ -2358,7 +2359,13 @@ function renderIntro() {
       </section>
     </div>`;
   $("#randName").addEventListener("click", () => { $("#nameInput").value = pick(NAMES); });
+  $("#nameInput").addEventListener("input", () => { $("#nameHint").hidden = true; });
   $("#born").addEventListener("click", () => {
+    if (!$("#nameInput").value.trim()) {
+      $("#nameHint").hidden = false;
+      $("#nameInput").focus();
+      return;
+    }
     s = newLife($("#nameInput").value.trim(), document.querySelector('input[name="gender"]:checked')?.value);
     s.ap = apFor(s);
     const kid = gx("아들", "딸");
