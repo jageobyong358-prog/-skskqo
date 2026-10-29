@@ -339,7 +339,7 @@ const ACH = {
   heir: "H사 가주 후보", head: "H사 가주", lord: "H사 군주", heishou: "흑수가 되다", pildu: "흑수 필두", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", hatchery: "부화장 출신", lost: "길 잃은 자", lostReturn: "열차에서 돌아오다", rcorpTop: "R사 팀장", wcleanTop: "1등급 정리요원", blackcloudTop: "흑운회 조장", geomgyeTop: "검계의 계주",
+  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", hatchery: "부화장 출신", lost: "길 잃은 자", lostReturn: "열차에서 돌아오다", rcorpTop: "R사 팀장", wcleanTop: "1등급 정리요원", blackcloudTop: "흑운회 조장", geomgyeTop: "검계의 우두",
   spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
@@ -462,6 +462,7 @@ function resolveUp(n = 1) { s.resolve = (s.resolve || 0) + n; }
 function hurt(n, cause) {
   if (!s.alive) return;
   s.hp = clamp(s.hp - n, 0, 100);
+  if (n >= 15) s.scars = (s.scars || 0) + 1;
   if (s.hp <= 0) die(cause);
 }
 // 단련이나 수업처럼 다치기는 해도 죽지는 않는 피해
@@ -651,25 +652,27 @@ const ORGS = {
     join: { label: "흑운회", desc: "엄지 산하 조직 · 위계가 엄격하다", cond: () => s.age >= 16 && streetLike(s), phrase: "흑운회에 충성을 맹세한다",
       text: () => "엄지 산하 흑운회에 들어갔다. 윗사람이 말할 때는 고개를 들지 않는다. 그것이 첫 번째 규칙이다." },
     work: { label: "흑운회의 일", desc: "엄지의 이름으로 구역을 지킨다 · 전투", phrase: "흑운회의 일을 맡는다" },
-    foes: ["다른 패밀리의 조직원들", "상납금을 떼먹은 자들", "엄지의 눈을 피하는 조직"], str: r => 40 + r * 15, pay: r => rand(1500, 4000) * (r + 1),
+    foes: ["검계의 살수들", "다른 패밀리의 조직원들", "상납금을 떼먹은 자들", "엄지의 눈을 피하는 조직"], str: r => 40 + r * 15, pay: r => rand(1500, 4000) * (r + 1),
     income: r => 1500 + r * 3000, top: "blackcloudTop",
     winText: foe => `${foe}을(를) 처리했다. 윗선에 보고할 때는 고개를 숙인 채였다.`,
   },
   geomgye: {
-    title: () => "검계 ", ranks: ["계원", "검수", "계주"],
-    join: { label: "검계", desc: "S사 뒷골목의 비밀 검객 조직", cond: () => s.age >= 16 && isS(s), phrase: "검계의 계원이 된다",
-      text: () => "검계에 들었다. 맹세는 밤에, 칼로 했다. 낮에는 평범한 백성처럼 살고, 밤에는 갓 대신 두건을 쓴다." },
-    work: { label: "검계의 밤일", desc: "밤에 칼을 든다 · 전투", phrase: "두건을 쓰고 밤길에 나선다" },
-    foes: ["포도청의 사병들", "다른 계의 검객들", "양반가의 사병"], str: r => 45 + r * 15, pay: r => rand(1500, 3500) * (r + 1),
+    title: () => "검계 ", ranks: ["살수", "우두"],
+    join: { label: "검계", desc: "S사의 검객 조직 · 몸에 흉터가 있어야 받아 준다", cond: () => s.age >= 16 && isS(s), phrase: "검계의 문을 두드린다",
+      // 상처가 없는 사람은 받지 않는다
+      reject: () => (!s.scars ? "검계의 사내가 옷깃을 젖혀 몸을 살폈다. 흉터 하나 없었다. \"검을 휘두를 때 망설임이 있다거나, 살의가 모자란 이들이지.\" 문이 닫혔다." : ""),
+      text: () => `검계에 들었다. 맹세는 밤에, 칼로 했다. 몸에 남은 흉터 ${s.scars}개를 하나하나 확인한 뒤에야 받아 주었다.` },
+    work: { label: "검계의 밤일", desc: "흑운회와 피를 본다 · 전투", phrase: "흑운회를 베러 나선다" },
+    foes: ["흑운회 와카슈들", "흑운회 부조장", "흑운회의 조직원들"], str: r => 45 + r * 15, pay: r => rand(1500, 3500) * (r + 1),
     income: r => 1200 + r * 2500, top: "geomgyeTop",
-    winText: foe => `${foe}을(를) 베고 새벽닭이 울기 전에 돌아왔다.`,
+    winText: foe => `${foe}을(를) 베었다. 흑운회와의 피는 오늘도 마르지 않는다.`,
   },
 };
 function orgActions() {
   const out = [];
   for (const [type, o] of Object.entries(ORGS)) {
     out.push({ id: type + "Join", g: "진로", label: o.join.label, desc: o.join.desc, cond: () => !s.job && o.join.cond(),
-      run() { setJob({ type, rank: 0, ...(o.join.extra ? o.join.extra() : {}) }); return o.join.text(s.job); } });
+      run() { const no = o.join.reject && o.join.reject(); if (no) return no; setJob({ type, rank: 0, ...(o.join.extra ? o.join.extra() : {}) }); return o.join.text(s.job); } });
     out.push({ id: type + "Work", g: "일", label: o.work.label, desc: o.work.desc, cond: () => s.job?.type === type, run: () => orgWork(type) });
   }
   return out;
@@ -2144,6 +2147,7 @@ function renderSheet() {
       <dt>명성</dt><dd>${s.rep}</dd>
       <dt>전투력</dt><dd>${Math.round(power(s))}</dd>
       <dt>의체</dt><dd>${s.aug}</dd>
+      ${s.scars ? `<dt>흉터</dt><dd>${s.scars}</dd>` : ""}
       ${s.relic ? `<dt>유물</dt><dd>${s.relic}</dd><dt>기억</dt><dd>${s.memory ?? 100} / 100</dd>` : ""}
       ${s.hFamily ? `<dt>가문</dt><dd>${esc(s.hFamily)}</dd>` : ""}
       ${s.heir && !s.heir.head ? `<dt>후계 다툼</dt><dd>${s.heir.wins} / 3승</dd>` : ""}
