@@ -140,6 +140,15 @@ header.top { display: flex; align-items: baseline; justify-content: space-betwee
 .boss-line.grand { font-size: 20px; font-weight: 700; }
 .boss-line.grand span { animation: tremble .16s infinite alternate, flare 1.4s ease-in-out infinite; text-shadow: 0 0 10px #e2553f, 0 0 22px #c9a14a88; }
 .boss-line.faint { font-size: 16px; font-style: italic; color: var(--muted); }
+.boss-line.red, .boss-line.shatter, .boss-line.burn, .boss-line.fade { font-size: 20px; font-weight: 700; }
+.boss-line.red span { animation: tremble .16s infinite alternate, flare-red 1.2s ease-in-out infinite; text-shadow: 0 0 10px #ff2a2a, 0 0 24px #b0000088; }
+.boss-line.shatter span { animation: tremble .14s 8 alternate, flare-red 1.2s ease-in-out infinite, shatter .7s ease-in 1.4s forwards; text-shadow: 0 0 10px #ff2a2a, 0 0 24px #b0000088; }
+.boss-line.burn span { animation: tremble .12s infinite alternate, burn .5s ease-in-out infinite alternate; }
+.boss-line.fade span { animation: tremble .2s infinite alternate, flare-red 1.4s ease-in-out infinite, fadeaway 3s ease-out 1s forwards; text-shadow: 0 0 10px #ff2a2a; }
+@keyframes flare-red { 0%, 100% { color: #ff4a3d; } 50% { color: #ffb0a0; } }
+@keyframes shatter { to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
+@keyframes burn { from { color: #ffd34d; text-shadow: 0 0 6px #ff7a00, 0 -4px 14px #ff2a00, 0 -10px 22px #ff000088; } to { color: #ff5a1a; text-shadow: 0 0 10px #ffb000, 0 -8px 20px #ff3a00, 0 -16px 30px #ff000066; } }
+@keyframes fadeaway { to { opacity: .18; filter: blur(1px); } }
 .boss-line.faint span { animation: tremble .5s infinite alternate; }
 @keyframes tremble { from { transform: translate(-1px, 1px) rotate(-1.5deg); } to { transform: translate(1px, -1px) rotate(1.5deg); } }
 @keyframes flare { 0%, 100% { color: #f3d27a; } 50% { color: #ff6a4d; } }
@@ -601,6 +610,8 @@ function exchange(id) {
   if (pr >= er) {
     const d = Math.round(clamp((pr - er * 0.5) * mult * (guard ? 0.5 : 1) * (e.dmgMult || 1), 4, e.noCap ? Infinity : 90));
     c.ehp -= d;
+    // 아라야시키로 끝낼 때만 나오는 대사가 있는 상대는, 아라야시키를 쥔 사람 앞에서 한 번은 버틴다
+    if (e.arayaGuard && s.relic && !c.flags?.araya && c.ehp <= 0) c.ehp = Math.max(1, Math.floor(c.emax * 0.005));
     // 마지막 대사가 있는 상대는 대사를 남기기 전에는 쓰러지지 않는다
     if (e.lowLine && !c.lowSaid && c.ehp <= 0) c.ehp = Math.max(1, Math.floor(c.emax * 0.005));
     c.last = { pr, er, win: true, d };
@@ -610,7 +621,12 @@ function exchange(id) {
     c.last = { pr, er, win: false, d };
     c.log.push(`${head} 합에서 밀렸다. ${d}의 피해를 입었다.`);
     // 목숨을 걸지 않은 싸움은 쓰러지는 데서 끝난다
-    if (e.yieldAt && s.hp - d <= e.yieldAt) { s.hp = Math.max(1, s.hp - d); return endCombat("lose"); }
+    if (e.yieldAt && s.hp - d <= e.yieldAt) {
+      s.hp = Math.max(1, s.hp - d);
+      // 쓰러지기 직전의 마지막 대사가 있으면 한 장면 보여 주고 끝낸다
+      if (e.yieldTalk) { c.speech = e.yieldTalk; c.log.push(`${e.name}: "${e.yieldTalk.text}"`); c.final = "lose"; c.n++; return drawCombat(); }
+      return endCombat("lose");
+    }
     hurt(d, e.cause);
   }
   if (!s.alive) return endCombat("dead");
@@ -619,6 +635,7 @@ function exchange(id) {
   // 합마다 정해진 대사, 체력이 1% 미만이 되면 마지막 대사
   c.speech = (e.lines && e.lines[c.n]) ? { text: e.lines[c.n], kind: "grand" } : null;
   if (e.lowLine && !c.lowSaid && c.ehp < c.emax * 0.01) { c.speech = { text: e.lowLine, kind: "faint" }; c.lowSaid = true; }
+  if (e.talk) { const t = e.talk(c, { playerWon: pr >= er, move: id }); if (t) c.speech = t; }
   if (c.speech) c.log.push(`${e.name}: "${c.speech.text}"`);
   c.n++;
   drawCombat();
@@ -633,7 +650,7 @@ function endCombat(result) {
   const sp = c.spec;
   let out = "";
   if (result === "win") jyiUp({ yong: 2 });
-  if (result === "win") out = sp.win ? sp.win(c.n) : `${c.e.name}을(를) 쓰러뜨렸다.`;
+  if (result === "win") out = sp.win ? sp.win(c.n, c) : `${c.e.name}을(를) 쓰러뜨렸다.`;
   else if (result === "lose") out = sp.lose ? sp.lose() : `${c.e.name}에게 졌다.`;
   else if (result === "fled") out = sp.fled ? sp.fled() : "싸움에서 물러났다.";
   if (!s.alive) out = "";
@@ -654,16 +671,17 @@ function drawCombat() {
             <div class="foe-meta">위력 ${curStr(c)}${e.ramp ? ` (${e.ramp.every}합마다 +${e.ramp.add})` : ""}${e.mang ? ` · 망 ${e.mang}겹` : ""}${e.easy ? ` · 가르침 덕에 -${e.easy}` : ""} · 나의 위력 ${Math.round(power(s))}</div></div>
         </div>
         ${c.last ? `<div class="clash-fx ${c.last.win ? "win" : "lose"}" aria-hidden="true"><span class="cf-me">${c.last.pr}</span><span class="cf-x">合</span><span class="cf-foe">${c.last.er}</span></div>` : ""}
-        ${c.speech ? `<p class="boss-line ${c.speech.kind}">${[...c.speech.text].map((ch, i) => `<span style="animation-delay:${(i % 7) * -0.05}s">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</p>` : ""}
+        ${c.speech ? `<p class="boss-line ${c.speech.kind}">${[...c.speech.text].map((ch, i) => `<span style="animation-delay:${(i % 7) * -0.05}s;--dx:${rand(-60, 60)}px;--dy:${rand(-40, 50)}px;--rot:${rand(-80, 80)}deg">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</p>` : ""}
         <div class="clash">${c.log.slice(-3).map(l => `<p>${esc(l)}</p>`).join("") || "<p>서로의 거리를 잰다.</p>"}</div>
         <div class="moves">
-          ${combatMoves().map(m => `<button class="btn" id="mv-${m.id}" data-id="${m.id}">${esc(m.label)}<small>${esc(m.sub)}</small></button>`).join("")}
-          <button class="btn ghost" id="mv-auto">자동으로 싸운다<small>끝날 때까지 벤다</small></button>
+          ${c.final ? `<button class="btn primary" id="mv-end">계속<small>싸움이 끝났다</small></button>` : combatMoves().map(m => `<button class="btn" id="mv-${m.id}" data-id="${m.id}">${esc(m.label)}<small>${esc(m.sub)}</small></button>`).join("")}
+          ${c.final ? "" : `<button class="btn ghost" id="mv-auto">자동으로 싸운다<small>끝날 때까지 벤다</small></button>`}
         </div>
       </div>
     </div>`;
   $("#modalRoot").querySelectorAll(".moves .btn[data-id]").forEach(b => b.addEventListener("click", () => exchange(b.dataset.id)));
-  $("#mv-auto").addEventListener("click", () => { for (let i = 0; i < 80 && combat; i++) exchange("slash"); });
+  $("#mv-auto")?.addEventListener("click", () => { for (let i = 0; i < 80 && combat && !combat.final; i++) exchange("slash"); });
+  $("#mv-end")?.addEventListener("click", () => endCombat(combat.final));
   $("#mv-slash")?.focus();
 }
 
@@ -1593,14 +1611,36 @@ const EVENTS = [
     choices: [
       { label: "맞선다", sub: "체력 2000 · 위력 120 · 망 1겹 · 5합 이내 또는 10합 이상으로 쓰러뜨리면 전리품", run: () => ({
         combat: {
-          name: "동부십검 뇌횡", hp: 2000, str: 120, mang: 1, dmgMult: 4, hitMult: 0.5, noCap: true, yieldAt: 10,
+          name: "동부십검 뇌횡", hp: 2000, str: 120, mang: 1, dmgMult: 4, hitMult: 0.5, noCap: true, yieldAt: 1, arayaGuard: true,
+          // 플레이어가 쓰러질 때(체력 1% 이하)
+          yieldTalk: { text: "호랭이를 잡을라 그랬으믄! 느그도 잡아먹힐 각오를 했어야제!", kind: "burn" },
+          // 한 합에 여러 조건이 겹치면 위에 있는 대사가 먼저 나온다. 한 번만 하는 대사는 flags로 기억한다.
+          talk(c, x) {
+            const f = c.flags || (c.flags = {});
+            const me = c.ehp / c.emax, you = s.hp / 100;
+            if (me < 0.01 && x.move === "araya" && !f.araya) { f.araya = true; c.leiDeath = true; return { text: "거미집의 외부강사로 갔을때가 생각나네잉, 그려. 이번엔 또 어떤 기억을 지울라꼬?", kind: "fade" }; }
+            if (me < 0.1 && !f.m10) { f.m10 = true; return { text: "한번 벌인 판인디, 끝은 보고 가야제.", kind: "red" }; }
+            if (me < 0.4 && !f.m40) { f.m40 = f.m50 = true; return { text: "그려. 그라고 나옹께 이쪽도 달아오르는고마.", kind: "red" }; }
+            if (me < 0.5 && !f.m50) { f.m50 = true; return { text: "허… 쪼까 하는디? 총알값 아까울 놈들은 아닌갑네?", kind: "red" }; }
+            if (you < 0.5 && !f.y50) { f.y50 = true; return { text: "벌써 지쳐쓰까?", kind: "red" }; }
+            if (c.n === 1) return { text: "고라고 서 있음 목 떨어진다잉!", kind: "red" };
+            if (x.playerWon) return { text: "워뗘? 이건 좀 받아볼 만한가벼?", kind: "shatter" };
+            return null;
+          },
           desc: "동부 엄지의 카포 IIII이자 소지의 천퇴성. 칼끝이 움직이기도 전에 바람이 먼저 베인다. 5합 이내에 끝내면 그의 칼과 탄환을, 10합 이상 버텨 쓰러뜨리면 그의 모자를 얻는다.",
           cause: "동부십검 뇌횡의 칼에",
         },
-        win(n) {
+        win(n, c) {
           s.leiHengDone = true;
           s.rep += 40;
           achieve("leiHeng");
+          // 아라야시키 앞에서 마지막 대사를 남겼다면, 뇌횡은 쓰러지는 것이 아니라 죽는다
+          if (c?.leiDeath) {
+            let loot = "";
+            if (n <= 5) { loot = gainRelic(relicOf("천퇴성도")); s.tigerShells = (s.tigerShells || 0) + 10; loot += " 맹호표탄 10발을 얻었다."; }
+            else if (n >= 10) loot = gainRelic(relicOf("카포의 모자"));
+            return `${n}합 끝에 아라야시키가 뇌횡을 베었다. 뇌횡이 사망했다. 벤 자리에는 담배 연기만 남았다. ${loot}`;
+          }
           if (n <= 5) {
             const r = gainRelic(relicOf("천퇴성도"));
             s.tigerShells = (s.tigerShells || 0) + 10;
