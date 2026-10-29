@@ -118,6 +118,32 @@ header.top { display: flex; align-items: baseline; justify-content: space-betwee
 .modal .clash p { margin: 0; font-family: var(--sans); white-space: normal; }
 .modal .clash p:last-child { color: var(--fg); }
 .modal .clash p:not(:last-child) { color: var(--muted); }
+/* 합 연출 */
+.clash-fx { display: flex; justify-content: center; align-items: center; gap: 18px; height: 46px; margin-bottom: 10px; font-family: var(--display); font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cf-me { color: var(--mind); animation: cf-left .42s cubic-bezier(.2,.9,.3,1.3) both; }
+.cf-foe { color: var(--blood); animation: cf-right .42s cubic-bezier(.2,.9,.3,1.3) both; }
+.cf-x { color: var(--brass); font-size: 22px; animation: cf-pop .35s ease-out .28s both; }
+.clash-fx.win .cf-me, .clash-fx.lose .cf-foe { text-shadow: 0 0 14px currentColor; }
+.clash-fx.win .cf-foe, .clash-fx.lose .cf-me { animation-name: cf-right-dim; }
+.clash-fx.win .cf-foe { animation-name: cf-right-dim; }
+.clash-fx.lose .cf-me { animation-name: cf-left-dim; }
+@keyframes cf-left { from { transform: translateX(-90px); opacity: 0; } 70% { transform: translateX(10px); opacity: 1; } to { transform: none; } }
+@keyframes cf-right { from { transform: translateX(90px); opacity: 0; } 70% { transform: translateX(-10px); opacity: 1; } to { transform: none; } }
+@keyframes cf-left-dim { from { transform: translateX(-90px); opacity: 0; } 70% { transform: translateX(10px); opacity: 1; } to { transform: translateX(-6px); opacity: .35; } }
+@keyframes cf-right-dim { from { transform: translateX(90px); opacity: 0; } 70% { transform: translateX(-10px); opacity: 1; } to { transform: translateX(6px); opacity: .35; } }
+@keyframes cf-pop { from { transform: scale(2.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.combat.hit { animation: hit-shake .32s ease-out; }
+@keyframes hit-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+/* 보스 대사: 화려하게 빛나며 흔들리는 글자 */
+.modal .boss-line { text-align: center; margin: 2px 0 12px; line-height: 1.6; white-space: normal; }
+.boss-line span { display: inline-block; }
+.boss-line.grand { font-size: 20px; font-weight: 700; }
+.boss-line.grand span { animation: tremble .16s infinite alternate, flare 1.4s ease-in-out infinite; text-shadow: 0 0 10px #e2553f, 0 0 22px #c9a14a88; }
+.boss-line.faint { font-size: 16px; font-style: italic; color: var(--muted); }
+.boss-line.faint span { animation: tremble .5s infinite alternate; }
+@keyframes tremble { from { transform: translate(-1px, 1px) rotate(-1.5deg); } to { transform: translate(1px, -1px) rotate(1.5deg); } }
+@keyframes flare { 0%, 100% { color: #f3d27a; } 50% { color: #ff6a4d; } }
+@media (prefers-reduced-motion: reduce) { .clash-fx span, .combat.hit, .boss-line span { animation: none !important; } }
 .moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .moves .btn small { display: block; color: var(--muted); font-size: 11px; line-height: 1.4; }
 .rings-tag { color: var(--brass); font-size: 16px; letter-spacing: .1em; }
@@ -575,9 +601,13 @@ function exchange(id) {
   if (pr >= er) {
     const d = Math.round(clamp((pr - er * 0.5) * mult * (guard ? 0.5 : 1) * (e.dmgMult || 1), 4, e.noCap ? Infinity : 90));
     c.ehp -= d;
+    // 마지막 대사가 있는 상대는 대사를 남기기 전에는 쓰러지지 않는다
+    if (e.lowLine && !c.lowSaid && c.ehp <= 0) c.ehp = Math.max(1, Math.floor(c.emax * 0.005));
+    c.last = { pr, er, win: true, d };
     c.log.push(`${head} 합에서 이겼다. ${e.name}에게 ${d}의 피해.`);
   } else {
     const d = Math.round(clamp((er - pr * 0.5) * 0.6 * (guard ? 0.5 : 1) * (e.hitMult || 1), 3, 45));
+    c.last = { pr, er, win: false, d };
     c.log.push(`${head} 합에서 밀렸다. ${d}의 피해를 입었다.`);
     // 목숨을 걸지 않은 싸움은 쓰러지는 데서 끝난다
     if (e.yieldAt && s.hp - d <= e.yieldAt) { s.hp = Math.max(1, s.hp - d); return endCombat("lose"); }
@@ -586,6 +616,10 @@ function exchange(id) {
   if (!s.alive) return endCombat("dead");
   if (c.ehp <= 0) return endCombat("win");
   if (s.hp <= (e.yieldAt || 0)) return endCombat("lose");
+  // 합마다 정해진 대사, 체력이 1% 미만이 되면 마지막 대사
+  c.speech = (e.lines && e.lines[c.n]) ? { text: e.lines[c.n], kind: "grand" } : null;
+  if (e.lowLine && !c.lowSaid && c.ehp < c.emax * 0.01) { c.speech = { text: e.lowLine, kind: "faint" }; c.lowSaid = true; }
+  if (c.speech) c.log.push(`${e.name}: "${c.speech.text}"`);
   c.n++;
   drawCombat();
 }
@@ -609,7 +643,7 @@ function drawCombat() {
   const c = combat, e = c.e;
   $("#modalRoot").innerHTML = `
     <div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="cTitle">
-      <div class="modal card combat">
+      <div class="modal card combat${c.last && !c.last.win ? " hit" : ""}">
         <div class="eyebrow">전투 · ${c.n}합</div>
         <h3 id="cTitle">${esc(e.name)}${e.mang ? ` <span class="rings-tag" title="망 ${e.mang}겹">${"◯".repeat(e.mang)}</span>` : ""}</h3>
         ${e.desc ? `<p>${esc(e.desc)}</p>` : ""}
@@ -619,6 +653,8 @@ function drawCombat() {
             <div class="bar-track"><div class="bar-fill" style="width:${clamp(c.ehp / c.emax * 100, 0, 100)}%;background:var(--brass)"></div></div>
             <div class="foe-meta">위력 ${curStr(c)}${e.ramp ? ` (${e.ramp.every}합마다 +${e.ramp.add})` : ""}${e.mang ? ` · 망 ${e.mang}겹` : ""}${e.easy ? ` · 가르침 덕에 -${e.easy}` : ""} · 나의 위력 ${Math.round(power(s))}</div></div>
         </div>
+        ${c.last ? `<div class="clash-fx ${c.last.win ? "win" : "lose"}" aria-hidden="true"><span class="cf-me">${c.last.pr}</span><span class="cf-x">合</span><span class="cf-foe">${c.last.er}</span></div>` : ""}
+        ${c.speech ? `<p class="boss-line ${c.speech.kind}">${[...c.speech.text].map((ch, i) => `<span style="animation-delay:${(i % 7) * -0.05}s">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("")}</p>` : ""}
         <div class="clash">${c.log.slice(-3).map(l => `<p>${esc(l)}</p>`).join("") || "<p>서로의 거리를 잰다.</p>"}</div>
         <div class="moves">
           ${combatMoves().map(m => `<button class="btn" id="mv-${m.id}" data-id="${m.id}">${esc(m.label)}<small>${esc(m.sub)}</small></button>`).join("")}
@@ -1073,6 +1109,12 @@ function becomeHead() {
             name: "혼각온량흑수[混覺轀輬黑獸] - 가주 사미윤", hp: 4759, str: 59, dmgMult: 5, noCap: true, flee: false,
             desc: "H사 · 전 가주 · 혼각온량흑수 · 사씨 가문 · 뒤틀림. 환을 삼킨 몸이 열한 흑수의 형상으로 뒤틀린다. 위력은 낮지만 끝없이 질기다.",
             cause: "대관원에서 혼각온량흑수가 된 전 가주에게",
+            lines: {
+              1: "예로부터 홍원은 선인들의 뜻에 따라 다뤄져왔다",
+              2: "여기서 가주의 대가 끊기면 안 된다…",
+              3: "누가 어르신들의 수발을 들고 선황충님의 뜻을 홍원에 펼쳐주겠느냐!!!",
+            },
+            lowLine: "소녀를 지켜봐주세요…!",
           },
           win(n) {
             setJob({ type: "hlord" }); achieve("lord"); s.rep += 50;
