@@ -658,13 +658,15 @@ const ORGS = {
   },
   geomgye: {
     title: () => "검계 ", ranks: ["살수", "우두"],
-    join: { label: "검계", desc: "S사의 검객 조직 · 몸에 흉터가 있어야 받아 준다", cond: () => s.age >= 16 && isS(s), phrase: "검계의 문을 두드린다",
+    join: { label: "검계", desc: "S사의 검객 조직 · 몸에 흉터가 있어야 받아 준다 · 우두머리는 우두", cond: () => s.age >= 16 && isS(s), phrase: "검계의 문을 두드린다",
       // 상처가 없는 사람은 받지 않는다
       reject: () => (!s.scars ? "검계의 사내가 옷깃을 젖혀 몸을 살폈다. 흉터 하나 없었다. \"검을 휘두를 때 망설임이 있다거나, 살의가 모자란 이들이지.\" 문이 닫혔다." : ""),
       text: () => `검계에 들었다. 맹세는 밤에, 칼로 했다. 몸에 남은 흉터 ${s.scars}개를 하나하나 확인한 뒤에야 받아 주었다.` },
     work: { label: "검계의 밤일", desc: "흑운회와 피를 본다 · 전투", phrase: "흑운회를 베러 나선다" },
     foes: ["흑운회 와카슈들", "흑운회 부조장", "흑운회의 조직원들"], str: r => 45 + r * 15, pay: r => rand(1500, 3500) * (r + 1),
-    income: r => 1200 + r * 2500, top: "geomgyeTop",
+    income: r => 1200 + r * 6000, top: "geomgyeTop",
+    // 우두는 검계의 우두머리다. 단 한 사람의 자리라 쉽게 오르지 못한다.
+    topChance: 0.12, topText: "검계의 우두머리, 우두가 되었다. 이제 검계의 모든 살수가 당신의 칼끝을 따른다.",
     winText: foe => `${foe}을(를) 베었다. 흑운회와의 피는 오늘도 마르지 않는다.`,
   },
 };
@@ -685,7 +687,12 @@ function orgWork(type) {
     win() {
       s.money += m; s.rep += 2;
       let text = `${o.winText(foe, j)} ${fmt(m)}안.`;
-      if (j.rank < o.ranks.length - 1 && chance(0.3)) { j.rank++; setJob(j); text += ` 지금은 ${jobLabel(j)}.`; if (j.rank === o.ranks.length - 1) achieve(o.top); }
+      const last = o.ranks.length - 1;
+      if (j.rank < last && chance(j.rank === last - 1 && o.topChance ? o.topChance : 0.3)) {
+        j.rank++; setJob(j);
+        text += j.rank === last && o.topText ? ` ${o.topText}` : ` 지금은 ${jobLabel(j)}.`;
+        if (j.rank === last) achieve(o.top);
+      }
       return text;
     },
     lose() { s.rep -= 2; return `${foe}에게 밀렸다. 윗선의 눈초리가 차가워졌다.`; },
