@@ -268,6 +268,7 @@ const RELICS = [
   // 붉은 안개의 전리품
   { name: "미미크리 [프로토타입]", pow: 30, curse: "hp", hidden: true, desc: "붉은 안개가 쓰던 E.G.O 무기의 시제품. 벤 것을 먹고 주인의 피도 탐낸다." },
   { name: "다스리는 황제의 왕관", pow: 30, rep: 30, curse: "sp", hidden: true, desc: "연기 전쟁의 전장을 다스리던 바퀴황제의 왕관. 쓰면 벌레들이 고개를 숙이고, 밤마다 군단의 발소리가 들린다." },
+  { name: "금옥기외 패서기중[金玉基外 敗絮其中]", pow: 28, curse: "sp", hidden: true, desc: "겉은 금과 옥이요 속은 썩은 솜이라. 전 가주의 몸에서 나온 것. 쥐고 있으면 선인들의 시선이 느껴진다." },
   { name: "지혜성도", pow: 20, hidden: true, desc: "소지의 오오타치. 베고 지나간 자리에 파란 검흔이 남는다." },
   { name: "자양화", pow: 8, stat: "temp", hidden: true, desc: "푸른 수국 장식. 쥐고 있으면 이유 모를 그리움이 밀려온다." },
   // 대호수의 전리품
@@ -336,7 +337,7 @@ const COLOR_A = ["진홍", "청록", "회백", "금빛", "칠흑", "은회", "�
 const COLOR_B = ["칼날", "늑대", "서리", "파도", "종소리", "안개", "망치", "장미", "등불", "메아리"];
 const EGO_NAMES = ["꺼지지 않는 등불", "가시 돋친 서약", "잿빛 요람", "거꾸로 핀 꽃", "녹슨 맹세", "침묵하는 종", "부서진 나침반", "붉은 실타래", "깊은 우물", "새벽의 칼날"];
 const ACH = {
-  heir: "H사 가주 후보", head: "H사 가주", lord: "H사 군주", heishou: "흑수가 되다", pildu: "흑수 필두", captain: "대호수의 선장", pirateCaptain: "해적선장",
+  heir: "H사 가주 후보", head: "H사 가주", lord: "H사 군주", eternalHead: "영생을 얻은 가주", heishou: "흑수가 되다", pildu: "흑수 필두", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
   leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 베다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", hatchery: "부화장 출신", lost: "길 잃은 자", lostReturn: "열차에서 돌아오다", rcorpTop: "R사 팀장", wcleanTop: "1등급 정리요원", blackcloudTop: "흑운회 조장", geomgyeTop: "검계의 우두",
@@ -412,7 +413,7 @@ function jobLabel(j) {
     case "finger": return `${j.name} ${["견습", "정식 단원", "중견", "간부"][j.rank]}`;
     case "worker": return "공장 노동자";
     case "heishou": return `흑수 - ${j.branch}${j.rank ? " " + HEISHOU_RANKS[j.rank] : ""}`;
-    case "hhead": return "H사 가주";
+    case "hhead": return s?.eternal ? "영생을 얻은 H사 가주" : "H사 가주";
     case "hlord": return "H사 군주";
     case "sailor": return j.rank === 3 ? `「${j.ship}」호 선장` : `대호수 ${["갑판원", "항해사", "일등항해사"][j.rank]}`;
     case "pirate": return j.rank === 3 ? `해적선 「${j.ship}」의 선장` : `해적 ${["졸개", "갑판장", "부선장"][j.rank]}`;
@@ -783,7 +784,6 @@ const ACTIONS = [
   { id: "heirDuel", g: "일", label: "후계 결투", desc: "다른 가문의 후보와 결투 · 용 +5 · 3승 필요", cond: () => s.heir && !s.heir.head && s.heir.wins < 3, run: heirDuel },
   { id: "heirPolitics", g: "일", label: "원로 포섭", desc: "신중·자제로 세를 모은다 · 지 +5", cond: () => s.heir && !s.heir.head && s.heir.wins < 3, run: heirPolitics },
   { id: "becomeHead", g: "일", label: "가주 취임", desc: "3승과 지·용·인 모두 100", cond: () => s.heir && !s.heir.head && s.heir.wins >= 3, block: () => !jyiFull() && `지·용·인 모두 100 필요 (${jyiText()})`, run: becomeHead },
-  { id: "lordChallenge", g: "일", label: "군주 칭호", desc: "가주가 스스로를 군주라 칭한다 · 지·용·인 모두 100", cond: () => s.job?.type === "hhead", block: () => !jyiFull() && `지·용·인 모두 100 필요 (${jyiText()})`, run: lordChallenge },
   { id: "voyage", g: "일", label: "항해", desc: "돈 · 실적 · 호수의 괴물", cond: () => s.job?.type === "sailor", run: voyage },
   { id: "sailorPromo", g: "일", label: "진급", desc: "실적과 신중 · 끝은 선장", cond: () => s.job?.type === "sailor" && s.job.rank < 3, block: () => s.job.exp < (s.job.rank + 1) * 2 && `실적 ${(s.job.rank + 1) * 2} 필요 (현재 ${s.job.exp})`, run: sailorPromo },
   { id: "plunder", g: "일", label: "약탈", desc: "상선 습격 · 전투 · 명성 ↓", cond: () => s.job?.type === "pirate", run: plunder },
@@ -1056,7 +1056,31 @@ function becomeHead() {
   s.heir.head = true;
   setJob({ type: "hhead", family: s.hFamily });
   achieve("head"); s.rep += 20;
-  return `세 가문의 후보들이 모두 물러났다. ${s.hFamily} 출신으로 H사의 가주가 되었다.`;
+  say(`세 가문의 후보들이 모두 물러났다. ${s.hFamily} 출신으로 H사의 가주가 되었다.`, "good");
+  return {
+    title: "대관원",
+    text: "전 가주 사미윤이 앞장서 대관원으로 이끌었다. 휘장 너머에 기괴한 모습의 선인들이 줄지어 앉아 있다. 사람의 형상이라 하기엔 어딘가 너무 길고, 너무 고요하다.\n전 가주가 옥함을 열었다. 안에서 무언가가 꿈틀거린다. 선황충이다.\n\"가주의 자리에 오른 것을 축하하오. 이것을 목에 꽂으면 영생을 얻소.\"",
+    choices: [
+      { label: "선황충을 받아들여 목에 꽂는다", sub: "영생을 얻은 가주가 된다", run() {
+        s.eternal = true; achieve("eternalHead"); strain(rand(10, 20), "선황충이 목 안으로 파고들어");
+        return s.alive ? "선황충이 목덜미를 파고들었다. 차가운 것이 혈관을 따라 퍼진다. 선인들이 일제히 고개를 끄덕였다. 이제 늙지 않는다. 영생을 얻은 가주다." : "";
+      } },
+      { label: "선황충을 거부한다", sub: "전 가주와 싸운다 · 이기면 군주", run: () => {
+        say("옥함을 밀어냈다. 사미윤의 얼굴에서 웃음이 사라졌다. 그가 품에서 검은 환을 꺼내 삼켰다. 모든 흑수의 힘을 쓸 수 있다는 환이었다.", "bad");
+        return {
+          combat: {
+            name: "혼각온량흑수[混覺轀輬黑獸] - 가주 사미윤", hp: 4759, str: 59, dmgMult: 5, noCap: true, flee: false,
+            desc: "H사 · 전 가주 · 혼각온량흑수 · 사씨 가문 · 뒤틀림. 환을 삼킨 몸이 열한 흑수의 형상으로 뒤틀린다. 위력은 낮지만 끝없이 질기다.",
+            cause: "대관원에서 혼각온량흑수가 된 전 가주에게",
+          },
+          win(n) {
+            setJob({ type: "hlord" }); achieve("lord"); s.rep += 50;
+            return `${n}합 끝에 뒤틀린 흑수의 몸이 무너졌다. 선인들은 아무 말 없이 고개를 숙였다. 이제 H사의 군주다. ${gainRelic(relicOf("금옥기외 패서기중[金玉基外 敗絮其中]"))}`;
+          },
+        };
+      } },
+    ],
+  };
 }
 function heirDuel() {
   const rival = pick(NAMES.filter(n => n !== s.name));
@@ -1071,17 +1095,6 @@ function heirPolitics() {
   if (chance(0.15 + (s.prud + s.temp) / 300)) { s.heir.wins++; return s.heir.wins >= 3 ? "원로회의 과반이 편에 섰다. 이제 지·용·인을 갖추면 가주의 자리에 오를 수 있다." : `원로 한 명을 포섭했다. 후계 다툼 ${s.heir.wins}승.`; }
   strain(rand(8, 14), "가문의 암투에");
   return s.alive ? "찻잔 너머의 말들은 전부 칼이었다. 아무도 편에 서 주지 않았다." : "";
-}
-// 군주는 싸워서 빼앗는 자리가 아니라, 가주가 스스로를 그렇게 칭하는 것이다
-function lordChallenge() {
-  return {
-    title: "군주의 칭호",
-    text: "세 가문의 원로들이 고개를 숙인 채 기다린다. H사의 가주는 원한다면 스스로를 군주라 칭할 수 있다.\n한 번 그 이름을 입에 올리면 다시 가주로 돌아갈 수는 없다.",
-    choices: [
-      { label: "스스로를 군주라 칭한다", run() { setJob({ type: "hlord" }); achieve("lord"); s.rep += 50; return "\"오늘부터 나를 군주라 부르라.\" 그 한마디에 H사의 모든 가문이 고개를 숙였다."; } },
-      { label: "가주로 남는다", run: () => "칭호는 입에 올리지 않았다. 가주라는 이름으로도 충분하다." },
-    ],
-  };
 }
 function voyage() {
   const j = s.job;
@@ -2037,7 +2050,7 @@ function passive() {
     if (!r.curse) continue;
     if (r.curse === "hp") hurt(rand(2, 6), `유물 「${n}」에 생명을 빼앗겨`); else strain(rand(2, 6), `유물 「${n}」에 잠식되어`);
   }
-  if (s.age >= 60 && !s.vampire) { gain("fort", -1); hurt(rand(1, 3) + Math.floor((s.age - 60) / 8), "노쇠하여"); }
+  if (s.age >= 60 && !s.vampire && !s.eternal) { gain("fort", -1); hurt(rand(1, 3) + Math.floor((s.age - 60) / 8), "노쇠하여"); }
   if (s.ego && !s.ego.stable && s.alive) strain(rand(4, 10), "불안정한 E.G.O에 잠식되어");
   if (s.job?.type === "claw" && s.alive) strain(rand(3, 8), "발톱의 의무에");
   if (s.zone === "wlost" && s.alive) strain(rand(4, 9), "엉킨 시간 속에서");
@@ -2045,7 +2058,7 @@ function passive() {
     if (chance(0.03)) { s.taboo = 0; say("한밤중 붉은 빛줄기가 창밖을 지나쳤다. 이번엔 다른 사람을 찾아온 것이었다.", "bad"); }
     else die("머리의 발톱에게 처형당했다. 금기는 잊히지 않는다", true);
   }
-  if (s.alive && !s.vampire && s.age >= 70 && chance((s.age - 67) * 0.015 + (s.zone === "back" ? 0.01 : 0))) {
+  if (s.alive && !s.vampire && !s.eternal && s.age >= 70 && chance((s.age - 67) * 0.015 + (s.zone === "back" ? 0.01 : 0))) {
     achieve("oldage");
     die("노환으로 잠든 채 세상을 떠났다. 이 도시에서 드문 죽음이다", true);
   }
@@ -2233,13 +2246,13 @@ const PHRASE = {
   augment: "의체 공방에 들른다",
   canned: "경험 통조림을 딴다", clerk: "백화점 계산대에 선다", climb: "위층으로 올라간다", cinema: "상영관에서 지난 삶을 본다", leaveSisyphe: "옥상 문을 열고 형기를 마친다",
   heishouJoin: "환을 먹고 흑수가 된다", sailorJoin: "대호수로 가는 배에 오른다", pirateJoin: "해적선에 몸을 싣는다", hunterJoin: "금기사냥꾼과 계약한다",
-  heishouWork: "재갈을 쥔 주인을 호위한다", heirDuel: "경쟁 후보에게 결투를 신청한다", heirPolitics: "원로들 사이에서 세를 모은다", becomeHead: "H사 가주의 자리에 오른다", lordChallenge: "스스로를 군주라 칭한다",
+  heishouWork: "재갈을 쥔 주인을 호위한다", heirDuel: "경쟁 후보에게 결투를 신청한다", heirPolitics: "원로들 사이에서 세를 모은다", becomeHead: "H사 가주의 자리에 오른다",
   voyage: "항해에 나선다", sailorPromo: "선장의 눈에 들려 한다", plunder: "상선을 습격한다", hunt: "금기 위반자를 추적한다", execute: "처형을 집행한다",
   bloodHunterJoin: "혈귀 사냥꾼 사무소의 문을 두드린다", butlerJoin: "저택의 경호 해결사로 들어간다", relicJoin: "유적 탐사대에 합류한다",
   bloodHunt: "혈귀를 사냥하러 나간다", serve: "저택을 지킨다", ruin: "유적 깊숙이 들어간다", feed: "피를 마신다", sellRelic: "유물을 경매에 내놓는다", moveNest: "둥지로 이주한다", moveBack: "뒷골목으로 이사한다",
 };
 const PHRASE_SPIDER = { play: "실 사이에 숨어 혼자 논다", study: "몰래 숨겨 둔 책을 읽는다", train: "홀로 검을 휘두른다", rest: "방구석에서 숨을 고른다" };
-const GOAL_IDS = ["becomeHead", "lordChallenge"];
+const GOAL_IDS = ["becomeHead"];
 const SPIDER_OK = ["sleep", "babble", "crawl", "toy", "play", "study", "train", "rest", "diary", "meditate", "shinLearn", "shinTrain", "egoCalm"];
 // 놀이는 사는 곳에 따라 다르게 부른다
 const PLAY_PLACE = { nest: "놀이터에서 뛰어논다", wing: "사내 어린이집 마당에서 뛰어논다", hcorp: "사합원 안마당에서 뛰어논다", scorp: "기와집 마당에서 뛰어논다", out: "폐허 사이를 뛰어다닌다" };
