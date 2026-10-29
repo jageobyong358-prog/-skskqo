@@ -340,7 +340,7 @@ const ACH = {
   heir: "H사 가주 후보", head: "H사 가주", lord: "H사 군주", heishou: "흑수가 되다", pildu: "흑수 필두", captain: "대호수의 선장", pirateCaptain: "해적선장",
   hunterLegend: "전설의 금기사냥꾼", claw: "머리의 발톱",
   vampire: "혈귀가 되다", bloodNoble: "혈귀 귀족", bloodLegend: "전설의 혈귀 사냥꾼", butlerChief: "저택의 우두머리", relic: "유물 발견", relic5: "유물 수집가",
-  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 걷어 내다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", hatchery: "부화장 출신", lost: "길 잃은 자", lostReturn: "열차에서 돌아오다", rcorpTop: "R사 팀장", wcleanTop: "1등급 정리요원", blackcloudTop: "흑운회 조장", geomgyeTop: "검계의 우두",
+  leiHeng: "동부십검을 꺾다", roachEmperor: "바퀴황제를 쓰러뜨리다", kali: "붉은 안개를 베다", whale: "창백한 고래를 잡다", marlin: "청새치 고래를 잡다", redWhale: "새빨간 고래를 잡다", disha: "72지살", tiangang: "36천강", hatchery: "부화장 출신", lost: "길 잃은 자", lostReturn: "열차에서 돌아오다", rcorpTop: "R사 팀장", wcleanTop: "1등급 정리요원", blackcloudTop: "흑운회 조장", geomgyeTop: "검계의 우두",
   spiderEscape: "거미집 탈출", sisyphe: "시지프형", sisypheOut: "형기 만료", abiSlayer: "아비를 베다", spiderEnd: "거미집의 끝",
   nest: "둥지 입성", wing: "날개 입사", fixer: "해결사 자격", grade1: "1급 해결사", color: "특색 해결사",
   finger: "손가락의 일원", taboo: "금기를 건드림", night: "청소부를 베다",
@@ -1570,14 +1570,14 @@ const EVENTS = [
       { label: "맞선다", sub: "체력 1800 · 위력 230 · 처치하면 미미크리 [프로토타입]", run: () => ({
         combat: {
           name: "붉은 안개 칼리", hp: 1800, str: 230, dmgMult: 5, hitMult: 0.4, noCap: true, yieldAt: 10,
-          desc: "특색, 붉은 안개. 소속은 ???????. \"망? 필요 없어.\"",
+          desc: "특색, 붉은 안개. 소속은 ???????.",
           cause: "붉은 안개의 칼날에",
         },
         win(n) {
           s.kaliDone = true;
           s.rep += 80;
           achieve("kali");
-          return `${n}합 끝에 붉은 안개가 걷혔다. 칼리가 칼을 내려놓았다. "...제법이네. 가져가." 그녀가 남기고 간 칼 한 자루. ${gainRelic(relicOf("미미크리 [프로토타입]"))}`;
+          return `${n}합 끝에 마지막 일격이 붉은 코트를 꿰뚫었다. 칼리가 무릎을 꿇었다. "...제법이네." 그 말을 끝으로 숨이 멎었다. 붉은 안개가 걷히고, 그녀가 쥐고 있던 칼만 남았다. ${gainRelic(relicOf("미미크리 [프로토타입]"))}`;
         },
         lose() { return "붉은 칼날이 눈앞에서 멈췄다. \"끝. 다음엔 제대로 해.\" 칼리는 등을 돌려 안개 속으로 사라졌다."; },
         fled() { return "안개 밖으로 필사적으로 달렸다. 등 뒤에서 짧은 목소리가 들렸다. \"도망은 빠르네.\""; },
