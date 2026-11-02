@@ -1,0 +1,40 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "io.github.jageobyong358.limbusarchive"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "io.github.jageobyong358.limbusarchive"
+        minSdk 24
+        targetSdk 35
+        // Follows the upstream release this wrapper was made from (Schirke/limbus-archive v0.12.17)
+        versionCode 1217
+        versionName "0.12.17"
+    }
+
+    signingConfigs {
+        // A fixed key kept in the repo so that each new APK installs over the previous one.
+        // It is not a secret: anyone with this repo can sign as this app. Fine for a personal sideload.
+        release {
+            storeFile file("limbus-archive.keystore")
+            storePassword "limbusarchive"
+            keyAlias "limbusarchive"
+            keyPassword "limbusarchive"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

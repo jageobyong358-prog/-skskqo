@@ -1,0 +1,55 @@
+name: Limbus Archive Android APK
+
+on:
+  push:
+    paths:
+      - "limbus-archive-android/**"
+      - ".github/workflows/limbus-archive-android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: limbus-archive-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Build the APK
+        run: gradle --no-daemon :app:assembleRelease
+
+      - name: Name the APK
+        run: |
+          VERSION=$(grep -oP 'versionName "\K[^"]+' app/build.gradle)
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          cp app/build/outputs/apk/release/app-release.apk "LimbusArchive-$VERSION.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LimbusArchive-${{ env.VERSION }}-apk
+          path: limbus-archive-android/LimbusArchive-${{ env.VERSION }}.apk
+
+      - name: Publish as a release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: limbus-archive-android-v${{ env.VERSION }}
+          name: Limbus Archive Android ${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          body: |
+            Android app for limbus-archive.com, made from [Schirke/limbus-archive](https://github.com/Schirke/limbus-archive) v${{ env.VERSION }}.
+            Download the APK below on your phone and install it (allow installs from your browser when asked).
+          files: limbus-archive-android/LimbusArchive-${{ env.VERSION }}.apk
+          make_latest: false
