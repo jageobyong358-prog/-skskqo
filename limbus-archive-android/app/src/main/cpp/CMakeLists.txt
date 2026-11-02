@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.18)
+project(t2d CXX)
+set(CMAKE_CXX_STANDARD 17)
+file(GLOB T2D_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/t2d/*.cpp)
+add_library(t2d SHARED t2d_jni.cpp ${T2D_SOURCES})
+target_include_directories(t2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/t2d)
+target_compile_options(t2d PRIVATE -O2 -fms-extensions -Wno-everything)

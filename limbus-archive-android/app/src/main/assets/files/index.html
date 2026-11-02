@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Files</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <button id="back" class="icon" aria-label="뒤로">‹</button>
+  <div class="title"><b id="title">파일</b><small id="subtitle">게임 파일 탐색</small></div>
+</header>
+
+<main id="view"></main>
+
+<div id="sheet" class="sheet hidden" role="dialog">
+  <div class="sheet-body">
+    <div class="sheet-head">
+      <div class="sheet-title"><b id="p-name"></b><small id="p-meta"></small></div>
+      <button class="icon" id="p-close" aria-label="닫기">×</button>
+    </div>
+    <div id="p-content" class="p-content"></div>
+    <div class="actions">
+      <button id="p-save" class="primary">저장</button>
+      <button id="p-json">JSON 저장</button>
+      <button id="p-raw">원본 저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="app.js"></script>
+</body>
+</html>

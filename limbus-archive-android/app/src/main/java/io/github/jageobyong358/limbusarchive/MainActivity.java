@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -13,7 +12,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +20,6 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
-import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -34,9 +31,6 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 
 /**
  * Android shell for limbus-archive.com, the browser copy of Schirke/limbus-archive.
@@ -65,6 +59,7 @@ public class MainActivity extends Activity {
         web.setBackgroundColor(Color.rgb(18, 18, 22));
         root.addView(web, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        addFilesButton();
         setContentView(root);
 
         WebSettings s = web.getSettings();
@@ -95,6 +90,66 @@ public class MainActivity extends Activity {
             Uri data = getIntent() != null ? getIntent().getData() : null;
             web.loadUrl(data != null && isSite(data) ? data.toString() : HOME);
         }
+    }
+
+    /**
+     * A small round button over the site that opens Files (the game's files: an app-only page of the Windows
+     * app). Drag it out of the way; a long press hides it until the app is opened again.
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private void addFilesButton() {
+        float dp = getResources().getDisplayMetrics().density;
+        android.widget.TextView b = new android.widget.TextView(this);
+        b.setText("📁");
+        b.setTextSize(20);
+        b.setGravity(android.view.Gravity.CENTER);
+        b.setContentDescription("Files");
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        bg.setColor(0xCC1B1B21);
+        bg.setStroke((int) (1.5f * dp), 0xFFC9A227);
+        b.setBackground(bg);
+        b.setElevation(6 * dp);
+        int size = (int) (46 * dp);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(size, size,
+                android.view.Gravity.BOTTOM | android.view.Gravity.START);
+        lp.leftMargin = (int) (12 * dp);
+        lp.bottomMargin = (int) (96 * dp);
+        root.addView(b, lp);
+        final float[] start = new float[4];
+        final boolean[] moved = {false};
+        b.setOnTouchListener((v, e) -> {
+            switch (e.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    start[0] = e.getRawX();
+                    start[1] = e.getRawY();
+                    start[2] = v.getTranslationX();
+                    start[3] = v.getTranslationY();
+                    moved[0] = false;
+                    return false;
+                case android.view.MotionEvent.ACTION_MOVE: {
+                    float dx = e.getRawX() - start[0], dy = e.getRawY() - start[1];
+                    if (Math.abs(dx) + Math.abs(dy) > 12 * dp) moved[0] = true;
+                    if (moved[0]) {
+                        v.setTranslationX(start[2] + dx);
+                        v.setTranslationY(start[3] + dy);
+                        return true;
+                    }
+                    return false;
+                }
+                case android.view.MotionEvent.ACTION_UP:
+                    return moved[0];
+                default:
+                    return false;
+            }
+        });
+        b.setOnClickListener(v -> startActivity(new Intent(this, FilesActivity.class)));
+        b.setOnLongClickListener(v -> {
+            if (moved[0]) return false;
+            v.setVisibility(View.GONE);
+            Toast.makeText(this, "숨겼습니다. 앱 아이콘을 길게 눌러 '파일 탐색'으로도 열 수 있습니다", Toast.LENGTH_LONG).show();
+            return true;
+        });
     }
 
     @Override
@@ -347,32 +402,8 @@ public class MainActivity extends Activity {
             toast("Download failed");
             return;
         }
-        if (name == null || name.isEmpty()) name = "limbus-archive";
-        if (!name.contains(".") && mime != null) {
-            String ext = MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
-            if (ext != null) name += "." + ext;
-        }
         try {
-            if (Build.VERSION.SDK_INT >= 29) {
-                ContentValues v = new ContentValues();
-                v.put(MediaStore.Downloads.DISPLAY_NAME, name);
-                if (mime != null && !mime.isEmpty()) v.put(MediaStore.Downloads.MIME_TYPE, mime);
-                v.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/LimbusArchive");
-                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
-                if (uri == null) throw new IllegalStateException("no storage");
-                try (OutputStream o = getContentResolver().openOutputStream(uri)) {
-                    o.write(bytes);
-                }
-            } else {
-                File dir = new File(Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOWNLOADS), "LimbusArchive");
-                //noinspection ResultOfMethodCallIgnored
-                dir.mkdirs();
-                try (OutputStream o = new FileOutputStream(new File(dir, name))) {
-                    o.write(bytes);
-                }
-            }
-            toast("Saved to Downloads/LimbusArchive/" + name);
+            toast("Saved to " + Saver.save(this, bytes, mime, name, ""));
         } catch (Exception e) {
             toast("Download failed: " + e.getMessage());
         }

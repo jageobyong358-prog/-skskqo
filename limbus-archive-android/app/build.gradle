@@ -11,8 +11,18 @@ android {
         minSdk 24
         targetSdk 35
         // Follows the upstream release this wrapper was made from (Schirke/limbus-archive v0.12.17)
-        versionCode 1217
-        versionName "0.12.17"
+        versionCode 1218
+        versionName "0.12.17.1"
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64"
+        }
+    }
+
+    // texture2ddecoder (ASTC, ETC2, BC7, crunch…) for the Files page
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+        }
     }
 
     signingConfigs {
@@ -33,8 +43,18 @@ android {
         }
     }
 
+    // the game type trees are gzipped already
+    androidResources {
+        noCompress "gz"
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    // LZMA for LZMA-compressed asset bundles
+    implementation "org.tukaani:xz:1.10"
 }

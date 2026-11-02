@@ -13,7 +13,37 @@ of the app that runs in a browser. This APK opens that site full screen as an ap
 - patch reports, news, change history, Identities & E.G.O, enemy handbook, story map, animations
 - team builder, Mirror Dungeon planner, damage / upgrade calculators, music player, games
 
-Only in the Windows app (they need the game on a PC): skill renders with effects, Versus, the Files browser.
+Plus **Files** (an app-only page of the Windows app), rebuilt for Android — see below.
+
+Still only in the Windows app: skill renders with effects and Versus. They run on the author's private code (a Unity
+player and the Versus modules, not in the public repository), so they cannot be rebuilt from it.
+
+## Files (game files on the phone)
+
+The 📁 button over the site (drag it aside; long-press hides it), or a long press on the app icon → **파일 탐색**.
+
+- Connect a folder that holds the game's files: the mobile game's `Android/data/com.ProjectMoon.LimbusCompany`
+  (Android 11–12 let you pick it; Android 13+ block it — copy the folder elsewhere with a PC or a Shizuku file
+  manager first), or files copied from a PC install (`LimbusCompany_Data`, or the downloaded bundles in
+  `%USERPROFILE%\AppData\LocalLow\Unity\ProjectMoon_LimbusCompany`). Single files can be opened too.
+- Lists the bundles (Unity cache folders shown by their bundle's name), then every object in one with its type,
+  name and container path; filter by type, search.
+- Preview and save: Texture2D and Sprite → PNG (sprites cut from their texture or SpriteAtlas, also from another
+  bundle), TextAsset → its text / JSON / bytes, VideoClip → MP4, Font → TTF/OTF, AudioClip → WAV for PCM sounds
+  (Vorbis ones are saved as the raw FSB5 file), anything else → its fields as JSON; and any object's raw bytes.
+  **Save all** exports what the list shows. Files go to `Downloads/LimbusArchive/Files/<bundle>`.
+
+How it is done: upstream reads the files with UnityPy (Python). Here the same formats are read in Java
+(`app/src/main/java/.../unity/`, ported from UnityPy): UnityFS bundles (LZ4, LZMA), serialized files v5–v26 (tested on v17–v22) with
+or without type trees (built-in type trees for Unity 6000.3, the game's version, in `assets/typetrees.json.gz`, made
+from UnityPy's type tree package). Compressed textures (ASTC, ETC/ETC2/EAC, DXT/BC1–7, PVRTC, ATC, crunch) are
+decoded by K0lb3's MIT [texture2ddecoder](https://github.com/K0lb3/texture2ddecoder), built with the NDK
+(`app/src/main/cpp`). Checked against UnityPy on its sample bundles (Unity 2017–2018, re-saved as serialized
+v19/21/22, LZ4/LZMA/none, bundle format 6/7): the same objects, names and container paths, and the same pixels
+(ASTC within 1/255).
+
+Not yet: masking tightly packed sprites to their outline (they come out as their rectangle), Vorbis → OGG,
+meshes as OBJ, FMOD `.bank` files.
 
 ## Android extras
 
@@ -31,7 +61,7 @@ publishes it as a GitHub Release (`limbus-archive-android-v<version>`). Open the
 
 ## Building it yourself
 
-Needs JDK 17 and the Android SDK (platform 35):
+Needs JDK 17 and the Android SDK (platform 35) with the NDK and CMake:
 
 ```
 cd limbus-archive-android

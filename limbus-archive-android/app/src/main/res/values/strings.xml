@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Limbus Archive</string>
+    <string name="files_name">Files</string>
+    <string name="files_short">파일 탐색</string>
+    <string name="files_long">게임 파일 탐색 (Files)</string>
 </resources>
